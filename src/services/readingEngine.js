@@ -1,3 +1,9 @@
+import {
+  DIRECT_MOOD_PATTERNS,
+  DIRECT_NEED_PATTERNS,
+  DIRECT_THEME_PATTERNS
+} from "../data/directMode.js";
+
 const THEME_CONTEXT = {
   geral: "no seu momento atual",
   amor: "na vida afetiva",
@@ -79,6 +85,10 @@ const POSITION_CONTEXTS = {
   }
 };
 
+function isDirect(readingMode) {
+  return readingMode === "direct";
+}
+
 function getPositionContext(position) {
   return POSITION_CONTEXTS[position] || {
     purpose: "Esta posição mostra uma camada importante da leitura.",
@@ -86,55 +96,91 @@ function getPositionContext(position) {
   };
 }
 
-function toneFromCards(cards) {
+function toneFromCards(cards, readingMode = "normal") {
   const challenging = cards.filter((card) => card.tone === "desafiadora").length;
   const favorable = cards.filter((card) => card.tone === "favorável").length;
 
-  if (challenging > favorable) {
-    return "O tom geral pede prudência. Não significa que a leitura seja negativa, mas indica que há algo a encarar com mais honestidade antes de esperar leveza.";
+  if (isDirect(readingMode)) {
+    if (challenging > favorable) return "O tom geral é exigente. A leitura pede honestidade, menos justificativa e mais atenção ao que você já percebeu.";
+    if (favorable > challenging) return "O tom geral abre espaço, mas abertura não é garantia. A leitura favorece movimento consciente, não espera passiva.";
+    return "O tom geral é misto. Há chance e cobrança ao mesmo tempo: a leitura pede que você observe o padrão e faça sua parte.";
   }
 
-  if (favorable > challenging) {
-    return "O tom geral traz abertura. Ainda assim, a leitura não fala de garantia automática; ela mostra que existe espaço para agir com mais confiança se houver presença e responsabilidade.";
-  }
-
+  if (challenging > favorable) return "O tom geral pede prudência. Não significa que a leitura seja negativa, mas indica que há algo a encarar com mais honestidade antes de esperar leveza.";
+  if (favorable > challenging) return "O tom geral traz abertura. Ainda assim, a leitura não fala de garantia automática; ela mostra que existe espaço para agir com mais confiança se houver presença e responsabilidade.";
   return "O tom geral é misto. A leitura mostra pontos de tensão e de apoio ao mesmo tempo, como se a situação pedisse equilíbrio entre cautela e movimento.";
 }
 
-function suitPattern(cards) {
+function suitPattern(cards, readingMode = "normal") {
   const suits = cards.reduce((acc, card) => {
     if (card.suit) acc[card.suit] = (acc[card.suit] || 0) + 1;
     return acc;
   }, {});
   const mainSuit = Object.entries(suits).sort((a, b) => b[1] - a[1])[0]?.[0];
 
-  const meanings = {
+  const normalMeanings = {
     Paus: "A presença de Paus destaca ação, energia, iniciativa e vontade. A situação pede movimento, mas também direção para não virar impulso.",
     Copas: "A presença de Copas destaca sentimentos, vínculos e escuta emocional. A situação pede sensibilidade, mas também cuidado para não confundir desejo com realidade.",
     Espadas: "A presença de Espadas destaca pensamento, comunicação e decisão. A situação pede clareza mental, mas também cuidado para que a análise não vire dureza ou ansiedade.",
     Ouros: "A presença de Ouros destaca vida prática, recursos e estabilidade. A situação pede organização concreta, paciência e atenção ao que pode ser sustentado no mundo real."
   };
 
-  return mainSuit ? meanings[mainSuit] : "A presença forte de Arcanos Maiores indica que a leitura toca mais em aprendizado, mudança de consciência e amadurecimento do que em acontecimentos isolados.";
+  const directMeanings = {
+    Paus: "Paus coloca ação em destaque. Se você quer mudança, precisa de direção prática, não apenas vontade intensa.",
+    Copas: "Copas traz emoção, mas também pede discernimento. Sentir muito não prova que algo é saudável, recíproco ou sustentável.",
+    Espadas: "Espadas cobra clareza. Aqui, pensamento confuso precisa de fato, conversa e decisão.",
+    Ouros: "Ouros puxa para o concreto. Desejo, medo e esperança não bastam; importa o que pode ser sustentado na prática."
+  };
+
+  if (!mainSuit) {
+    return isDirect(readingMode)
+      ? "A presença forte de Arcanos Maiores indica que o assunto pede maturidade, não apenas interpretação simbólica."
+      : "A presença forte de Arcanos Maiores indica que a leitura toca mais em aprendizado, mudança de consciência e amadurecimento do que em acontecimentos isolados.";
+  }
+
+  return isDirect(readingMode) ? directMeanings[mainSuit] : normalMeanings[mainSuit];
 }
 
-export function interpretCard({ card, position, theme, mood, need }) {
+export function interpretCard({ card, position, theme, mood, need, readingMode = "normal" }) {
   const positionContext = getPositionContext(position);
   const themeContext = THEME_CONTEXT[theme?.id] || "na situação consultada";
 
-  const paragraphs = [
+  if (isDirect(readingMode)) {
+    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
+    const needPattern = DIRECT_NEED_PATTERNS[need.id];
+    const themePattern = DIRECT_THEME_PATTERNS[theme.id];
+
+    return [
+      `${positionContext.purpose} ${card.name} aparece aqui com ${card.shortMeaning.toLowerCase()} ${themeContext}. No modo direto, isso deve ser lido como um chamado para olhar o ponto principal sem suavizar demais.`,
+      `${card.simpleExplanation} ${themePattern}`,
+      `${moodPattern.opening} Nesta posição — ${position} — a carta mostra como sua postura pode estar influenciando a forma de perceber sinais, limites e escolhas.`,
+      `${needPattern.opening} ${positionContext.bridge}`,
+      `Ponto de atenção: ${card.shadow || "existe um padrão que precisa ser reconhecido antes de ser repetido."}`
+    ].join("\n\n");
+  }
+
+  return [
     `${positionContext.purpose} ${card.name} aparece aqui trazendo o tema de ${card.shortMeaning.toLowerCase()} ${themeContext}.`,
     `${card.simpleExplanation} ${positionContext.bridge}`,
     `${mood.readingTone} Nesse contexto, ${card.name} ganha uma leitura mais pessoal: a carta mostra onde sua forma de chegar à situação pode influenciar o modo como você interpreta sinais, escolhas e limites.`,
     `${need.readingTone} Por isso, esta carta não deve ser lida apenas como significado geral do Tarô, mas como uma orientação para transformar percepção em atitude concreta.`,
     `Ponto de atenção: ${card.shadow || "observe onde há excesso, falta de clareza ou repetição de padrão."}`
-  ];
-
-  return paragraphs.join("\n\n");
+  ].join("\n\n");
 }
 
-export function buildCardAdvice({ card, position, theme, mood, need }) {
+export function buildCardAdvice({ card, position, theme, mood, need, readingMode = "normal" }) {
   const themeContext = THEME_CONTEXT[theme?.id] || "na situação consultada";
+
+  if (isDirect(readingMode)) {
+    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
+    const needPattern = DIRECT_NEED_PATTERNS[need.id];
+
+    return [
+      `${card.advice} Aplicado ${themeContext}, o recado é direto: transforme percepção em postura. Entender sem mudar nada vira só mais uma forma de adiar.`,
+      `${moodPattern.advice} ${needPattern.advice}`,
+      `Para esta posição — ${position} — escolha uma ação pequena e concreta: falar, esperar, organizar, impor um limite, pedir ajuda ou admitir o que já ficou evidente.`
+    ].join("\n\n");
+  }
 
   return [
     `${card.advice} Aplicado ${themeContext}, esse conselho pede uma atitude que você consiga praticar de verdade, sem transformar a leitura em cobrança impossível.`,
@@ -143,7 +189,19 @@ export function buildCardAdvice({ card, position, theme, mood, need }) {
   ].join("\n\n");
 }
 
-export function buildReadingOpening({ theme, mood, need, spread }) {
+export function buildReadingOpening({ theme, mood, need, spread, readingMode = "normal" }) {
+  if (isDirect(readingMode)) {
+    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
+    const needPattern = DIRECT_NEED_PATTERNS[need.id];
+    const themePattern = DIRECT_THEME_PATTERNS[theme.id];
+
+    return [
+      `Modo Direto ativado. Você escolheu ${theme.label}, chegou ${mood.label.toLowerCase()} e disse que precisa de ${need.label.toLowerCase()}. A leitura será mais firme: menos acolchoamento, mais clareza e mais responsabilidade sobre o que as cartas mostram.`,
+      `${themePattern} ${moodPattern.opening}`,
+      `${needPattern.opening} A tiragem ${spread.label} organiza isso em ${spread.positions.length} posição${spread.positions.length > 1 ? "ões" : ""}: ${spread.positions.join(", ")}. Cada carta será lida como parte de uma análise direta, não como uma frase isolada.`
+    ].join("\n\n");
+  }
+
   return [
     `Esta leitura parte do tema ${theme.label} e do modo como você chegou a ela: ${mood.label.toLowerCase()}. Isso muda a forma de ler as cartas, porque o Tarô não está apenas descrevendo uma situação externa; ele também espelha a postura com que você olha para essa situação agora.`,
     `${mood.readingTone} Ao mesmo tempo, você indicou que precisa de ${need.label.toLowerCase()}. ${need.readingTone}`,
@@ -151,14 +209,30 @@ export function buildReadingOpening({ theme, mood, need, spread }) {
   ].join("\n\n");
 }
 
-export function buildSynthesis({ cards, theme, mood, need }) {
+export function buildSynthesis({ cards, theme, mood, need, readingMode = "normal" }) {
   const majors = cards.filter((card) => card.arcana === "Maior").length;
   const themeContext = THEME_CONTEXT[theme?.id] || "na situação consultada";
   const cardNames = cards.map((card) => card.name).join(", ");
 
   const arcanaText = majors >= Math.ceil(cards.length / 2)
-    ? "A quantidade de Arcanos Maiores dá peso à leitura. Isso sugere que o tema não deve ser tratado apenas como um episódio passageiro, mas como parte de um aprendizado mais amplo."
-    : "A presença maior de Arcanos Menores aproxima a leitura da vida prática. Isso sugere que pequenas escolhas, conversas, hábitos e atitudes concretas podem alterar bastante o caminho.";
+    ? isDirect(readingMode)
+      ? "A quantidade de Arcanos Maiores mostra que o assunto tem peso. Não parece ser apenas detalhe; há aprendizado e responsabilidade envolvidos."
+      : "A quantidade de Arcanos Maiores dá peso à leitura. Isso sugere que o tema não deve ser tratado apenas como um episódio passageiro, mas como parte de um aprendizado mais amplo."
+    : isDirect(readingMode)
+      ? "A presença maior de Arcanos Menores puxa para a vida prática. A resposta não está só em interpretar; está em ajustar atitudes concretas."
+      : "A presença maior de Arcanos Menores aproxima a leitura da vida prática. Isso sugere que pequenas escolhas, conversas, hábitos e atitudes concretas podem alterar bastante o caminho.";
+
+  if (isDirect(readingMode)) {
+    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
+    const needPattern = DIRECT_NEED_PATTERNS[need.id];
+
+    return [
+      `O padrão central aparece na combinação entre ${cardNames}. Lidas juntas, as cartas mostram como o tema se complica ${themeContext} e onde sua postura pode estar participando dessa dinâmica.`,
+      `${arcanaText} ${suitPattern(cards, readingMode)}`,
+      `${toneFromCards(cards, readingMode)} Como você chegou ${mood.label.toLowerCase()} e busca ${need.label.toLowerCase()}, o recado central é: ${moodPattern.advice} ${needPattern.advice}`,
+      `A leitura fica mais útil quando é usada como espelho. Tentar prever tudo pode virar fuga de responsabilidade. O ponto agora é reconhecer padrão, ajustar postura e fazer o próximo movimento com mais honestidade.`
+    ].join("\n\n");
+  }
 
   return [
     `O padrão central aparece na combinação entre ${cardNames}. Lidas em conjunto, as cartas mostram como o tema se organiza ${themeContext}: não como uma resposta única, mas como um conjunto de forças que pedem observação e escolha consciente.`,
@@ -168,10 +242,21 @@ export function buildSynthesis({ cards, theme, mood, need }) {
   ].join("\n\n");
 }
 
-export function buildFinalAdvice({ cards, theme, mood, need }) {
+export function buildFinalAdvice({ cards, theme, mood, need, readingMode = "normal" }) {
   const firstCard = cards[0];
   const lastCard = cards[cards.length - 1];
   const themeContext = THEME_CONTEXT[theme?.id] || "na situação consultada";
+
+  if (isDirect(readingMode)) {
+    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
+    const needPattern = DIRECT_NEED_PATTERNS[need.id];
+
+    return [
+      `Conselho final: comece pelo que depende de você. ${moodPattern.advice} ${needPattern.advice} A leitura não está pedindo controle total; está pedindo uma postura mais honesta diante do que acontece ${themeContext}.`,
+      `${firstCard.name} abre a leitura com ${firstCard.shortMeaning.toLowerCase()}. ${lastCard.name} fecha ou orienta o conjunto com ${lastCard.shortMeaning.toLowerCase()}. Entre uma carta e outra, a mensagem é clara: perceber padrão sem agir diferente mantém o ciclo no mesmo lugar.`,
+      `Nas próximas 24 horas, faça algo concreto: uma conversa, uma pausa, um limite, uma organização, uma redução de expectativa ou uma decisão de não alimentar o mesmo ciclo. Se nada puder ser feito externamente, mude pelo menos a forma como você vem contando essa história para si.`
+    ].join("\n\n");
+  }
 
   return [
     `O conselho final é começar pelo que está sob seu alcance. ${mood.adviceTone} ${need.adviceTone} A leitura não pede que você controle tudo; ela pede que você escolha melhor sua postura diante do que está acontecendo ${themeContext}.`,
@@ -180,7 +265,13 @@ export function buildFinalAdvice({ cards, theme, mood, need }) {
   ].join("\n\n");
 }
 
-export function buildReflection({ theme, mood, need }) {
+export function buildReflection({ theme, mood, need, readingMode = "normal" }) {
+  if (isDirect(readingMode)) {
+    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
+    const needPattern = DIRECT_NEED_PATTERNS[need.id];
+    return `${moodPattern.reflection} ${needPattern.reflection}`;
+  }
+
   const themeQuestions = {
     geral: "O que este momento está tentando mostrar que você ainda não organizou em palavras?",
     amor: "Que atitude preserva melhor seus sentimentos e seus limites ao mesmo tempo?",
