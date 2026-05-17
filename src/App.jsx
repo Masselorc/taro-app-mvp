@@ -36,28 +36,22 @@ function normalize(value = "") {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function detectSensitive(theme, question) {
-  const text = normalize(`${theme} ${question}`);
-  if (["diagnostico", "tratamento", "remedio", "sintoma", "gravidez"].some((word) => text.includes(word))) {
-    return "O Tarô não deve ser usado para diagnóstico, tratamento ou prognóstico. A leitura pode ser feita de forma simbólica, voltada a autocuidado, equilíbrio e busca de apoio adequado.";
+function getThemeWarning(theme) {
+  if (theme === "dinheiro") {
+    return "Esta leitura não substitui orientação financeira. Use as cartas como apoio reflexivo sobre prudência, risco, organização e planejamento.";
   }
-  if (["investir", "aposta", "emprestimo", "todo meu dinheiro", "cripto"].some((word) => text.includes(word))) {
-    return "A leitura não deve recomendar investimento, compra, venda, empréstimo ou aposta. O foco será prudência, risco, organização e planejamento.";
+
+  if (theme === "autocuidado") {
+    return "Esta leitura não substitui cuidado médico, psicológico ou profissional. Use as cartas como apoio simbólico para observar equilíbrio, descanso e atenção a si.";
   }
-  if (["processo", "advogado", "justica", "sentenca"].some((word) => text.includes(word))) {
-    return "O Tarô não substitui orientação jurídica. A leitura pode abordar postura, clareza e cuidado, sem afirmar desfecho legal.";
-  }
-  if (["ele sente", "ela sente", "me ama", "vai voltar", "traicao", "trai"].some((word) => text.includes(word))) {
-    return "Perguntas sobre terceiros serão tratadas pela dinâmica percebida, pelos limites e pela sua postura, sem afirmar sentimentos ou ações de outra pessoa como certeza.";
-  }
+
   return "";
 }
 
-function chooseSpread(theme, question) {
+function chooseSpread(theme) {
   if (theme === "decisao") return "choice";
-  if (theme === "amor" && /voltar|gosta|ama|relacao|relação|conexao|conexão|ele|ela/i.test(question)) return "relationship";
-  if ((question || "").length > 160) return "cross";
-  if ((question || "").length < 35) return "single";
+  if (theme === "amor") return "relationship";
+  if (theme === "espiritualidade") return "time";
   return "three";
 }
 
@@ -155,15 +149,14 @@ function reflectiveQuestion(theme) {
 
 export default function TarotApp() {
   const [theme, setTheme] = useState("geral");
-  const [question, setQuestion] = useState("");
   const [spreadId, setSpreadId] = useState("auto");
   const [reading, setReading] = useState(null);
   const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem("tarot-history") || "[]"));
 
   const selectedSpread = useMemo(() => {
-    const id = spreadId === "auto" ? chooseSpread(theme, question) : spreadId;
+    const id = spreadId === "auto" ? chooseSpread(theme) : spreadId;
     return SPREADS.find((spread) => spread.id === id) || SPREADS[2];
-  }, [spreadId, theme, question]);
+  }, [spreadId, theme]);
 
   function saveHistory(nextReading) {
     const next = [nextReading, ...history].slice(0, 8);
@@ -172,7 +165,7 @@ export default function TarotApp() {
   }
 
   function createReading() {
-    const warning = detectSensitive(theme, question);
+    const warning = getThemeWarning(theme);
     const cards = shuffle(TAROT_DECK).slice(0, selectedSpread.positions.length).map((card, index) => ({
       ...card,
       position: selectedSpread.positions[index],
@@ -182,7 +175,6 @@ export default function TarotApp() {
       id: crypto.randomUUID(),
       createdAt: new Date().toLocaleString("pt-BR"),
       theme,
-      question: question.trim() || "Leitura geral do momento.",
       spread: selectedSpread,
       warning,
       cards,
@@ -200,7 +192,7 @@ export default function TarotApp() {
         <header className="rounded-[2rem] border border-violet-500/20 bg-slate-900/70 p-6 shadow-2xl shadow-violet-950/30">
           <p className="text-sm uppercase tracking-[0.35em] text-violet-300">Tarô - Leitura de Cartas</p>
           <h1 className="mt-3 text-4xl font-semibold md:text-6xl">Leitura de Cartas</h1>
-          <p className="mt-4 max-w-3xl text-slate-300">Uma experiência de Tarô clara, visual e reflexiva para orientar perguntas sem prometer certezas absolutas.</p>
+          <p className="mt-4 max-w-3xl text-slate-300">Escolha um tema, selecione uma tiragem e revele as cartas para uma leitura clara, visual e reflexiva.</p>
         </header>
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
@@ -215,8 +207,6 @@ export default function TarotApp() {
                 </button>
               ))}
             </div>
-            <label className="mt-5 block text-sm font-medium text-slate-300" htmlFor="question">Pergunta</label>
-            <textarea id="question" value={question} onChange={(event) => setQuestion(event.target.value)} rows={5} className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 p-4 text-slate-100 outline-none focus:border-violet-300" placeholder="Escreva sua pergunta ou deixe em branco para uma leitura geral." />
             <label className="mt-5 block text-sm font-medium text-slate-300" htmlFor="spread">Tiragem</label>
             <select id="spread" value={spreadId} onChange={(event) => setSpreadId(event.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 p-4 text-slate-100 outline-none focus:border-violet-300">
               {SPREADS.map((spread) => <option key={spread.id} value={spread.id}>{spread.label}</option>)}
@@ -233,14 +223,14 @@ export default function TarotApp() {
                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl text-amber-100">✦</div>
                 </div>
                 <h2 className="text-2xl font-semibold text-slate-100">Sua leitura aparecerá aqui</h2>
-                <p className="mt-2 max-w-md">Escolha um tema, formule a pergunta e revele as cartas.</p>
+                <p className="mt-2 max-w-md">Escolha um tema, selecione a tiragem e revele as cartas.</p>
               </div>
             ) : (
               <article className="space-y-5">
                 <div>
                   <p className="text-sm text-violet-300">{reading.createdAt}</p>
                   <h2 className="mt-1 text-2xl font-semibold">{reading.spread.label}</h2>
-                  <p className="mt-2 text-slate-300">Pergunta: {reading.question}</p>
+                  <p className="mt-2 text-slate-300">Tema: {THEMES.find((item) => item.id === reading.theme)?.label || "Leitura"}</p>
                 </div>
                 {reading.warning && <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-amber-100">{reading.warning}</div>}
                 <div className="grid gap-4">
@@ -273,7 +263,7 @@ export default function TarotApp() {
                 <button key={item.id} onClick={() => setReading(item)} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-left hover:border-violet-300/60">
                   <p className="text-sm text-slate-400">{item.createdAt}</p>
                   <p className="mt-1 font-semibold">{item.spread.label}</p>
-                  <p className="mt-1 line-clamp-2 text-sm text-slate-300">{item.question}</p>
+                  <p className="mt-1 text-sm text-slate-300">Tema: {THEMES.find((themeItem) => themeItem.id === item.theme)?.label || "Leitura"}</p>
                 </button>
               ))}
             </div>
