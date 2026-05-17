@@ -42,6 +42,17 @@ function CardArtwork({ card }) {
   );
 }
 
+function Paragraphs({ text }) {
+  return String(text || "")
+    .split("\n\n")
+    .filter(Boolean)
+    .map((paragraph) => (
+      <p key={paragraph.slice(0, 42)} className="mt-2 leading-relaxed text-slate-300">
+        {paragraph}
+      </p>
+    ));
+}
+
 export default function TarotCard({ card }) {
   return (
     <article className="overflow-hidden rounded-[1.8rem] border border-violet-200/20 bg-slate-950/80 p-4 shadow-xl shadow-slate-950/40">
@@ -52,12 +63,12 @@ export default function TarotCard({ card }) {
           <h3 className="mt-2 text-2xl font-semibold text-slate-50">{card.name}</h3>
           <p className="mt-3 text-base leading-relaxed text-slate-300">{card.shortMeaning}</p>
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-            <h4 className="font-semibold text-amber-100">O que esta carta quer dizer</h4>
-            <p className="mt-2 leading-relaxed text-slate-300">{card.text}</p>
+            <h4 className="font-semibold text-amber-100">Análise desta carta na leitura</h4>
+            <Paragraphs text={card.text} />
           </div>
           <div className="mt-3 rounded-2xl border border-violet-200/20 bg-violet-300/10 p-4">
             <h4 className="font-semibold text-violet-100">Conselho prático</h4>
-            <p className="mt-2 leading-relaxed text-slate-300">{card.advice}</p>
+            <Paragraphs text={card.personalAdvice || card.advice} />
           </div>
         </div>
       </div>
