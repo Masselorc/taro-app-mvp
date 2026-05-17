@@ -239,14 +239,9 @@ function reflectiveQuestion(theme) {
   return questions[theme] || questions.geral;
 }
 
-function rotateIndex(index, direction, length) {
-  return (index + direction + length) % length;
-}
-
 export default function TarotApp() {
   const [step, setStep] = useState("home");
   const [themeIndex, setThemeIndex] = useState(0);
-  const [spreadIndex, setSpreadIndex] = useState(0);
   const [reading, setReading] = useState(null);
 
   const selectedTheme = THEMES[themeIndex];
@@ -257,15 +252,12 @@ export default function TarotApp() {
     return [recommended, ...SPREADS.filter((spread) => spread.id !== recommendedId)].filter(Boolean);
   }, [selectedTheme.id]);
 
-  const selectedSpread = orderedSpreads[spreadIndex] || orderedSpreads[0];
-
   function selectTheme(index) {
     setThemeIndex(index);
-    setSpreadIndex(0);
     setStep("spread");
   }
 
-  function createReading(spread = selectedSpread) {
+  function createReading(spread) {
     const warning = getThemeWarning(selectedTheme.id);
     const cards = shuffle(TAROT_DECK).slice(0, spread.positions.length).map((card, index) => ({
       ...card,
@@ -350,62 +342,63 @@ export default function TarotApp() {
   }
 
   function renderSpreadSelection() {
-    const isRecommended = selectedSpread.id === RECOMMENDED_SPREAD_BY_THEME[selectedTheme.id];
-
     return (
-      <section className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
+      <section className="mx-auto max-w-6xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
         <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 2 de 3</p>
         <h2 className="mt-3 text-3xl font-semibold">Escolha a tiragem</h2>
         <p className="mt-2 text-slate-300">
-          Tema escolhido: <span className="font-semibold text-violet-100">{selectedTheme.label}</span>. Agora escolha quantas cartas e qual tipo de leitura faz mais sentido.
+          Tema escolhido: <span className="font-semibold text-violet-100">{selectedTheme.label}</span>. Todas as opções aparecem abaixo com a diferença entre elas.
         </p>
 
-        <div className="mt-6 rounded-[2rem] border border-amber-100/20 bg-slate-950/80 p-6">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full border border-amber-100/30 bg-amber-100/10 px-3 py-1 text-sm font-semibold text-amber-100">{selectedSpread.cards}</span>
-            {isRecommended && <span className="rounded-full border border-violet-200/30 bg-violet-300/10 px-3 py-1 text-sm font-semibold text-violet-100">Recomendada para este tema</span>}
-            <span className="text-sm text-slate-400">Tiragem {spreadIndex + 1} de {orderedSpreads.length}</span>
-          </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          {orderedSpreads.map((spread) => {
+            const isRecommended = spread.id === RECOMMENDED_SPREAD_BY_THEME[selectedTheme.id];
 
-          <h3 className="mt-5 text-3xl font-semibold text-slate-50">{selectedSpread.label}</h3>
-          <p className="mt-3 text-lg text-violet-100">{selectedSpread.summary}</p>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <h4 className="font-semibold text-amber-100">Quando escolher</h4>
-              <p className="mt-2 leading-relaxed text-slate-300">{selectedSpread.bestFor}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <h4 className="font-semibold text-amber-100">O que isso muda</h4>
-              <p className="mt-2 leading-relaxed text-slate-300">{selectedSpread.implication}</p>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-violet-200/20 bg-violet-300/10 p-4">
-            <h4 className="font-semibold text-violet-100">Posições das cartas</h4>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {selectedSpread.positions.map((position, index) => (
-                <div key={position} className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
-                  {index + 1}. {position}
+            return (
+              <button
+                key={spread.id}
+                onClick={() => createReading(spread)}
+                className="group flex min-h-[360px] flex-col rounded-[1.7rem] border border-white/10 bg-slate-950/80 p-5 text-left shadow-xl shadow-slate-950/30 transition hover:-translate-y-1 hover:border-violet-300/70 hover:bg-violet-950/30 focus:outline-none focus:ring-2 focus:ring-violet-300"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-amber-100/30 bg-amber-100/10 px-3 py-1 text-sm font-semibold text-amber-100">{spread.cards}</span>
+                  {isRecommended && <span className="rounded-full border border-violet-200/30 bg-violet-300/10 px-3 py-1 text-sm font-semibold text-violet-100">Recomendada para este tema</span>}
                 </div>
-              ))}
-            </div>
-          </div>
+
+                <h3 className="mt-5 text-2xl font-semibold text-slate-50">{spread.label}</h3>
+                <p className="mt-3 text-base font-medium text-violet-100">{spread.summary}</p>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <h4 className="font-semibold text-amber-100">Quando escolher</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-300">{spread.bestFor}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <h4 className="font-semibold text-amber-100">O que isso muda</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-300">{spread.implication}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-violet-200/20 bg-violet-300/10 p-4">
+                  <h4 className="font-semibold text-violet-100">Posições das cartas</h4>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {spread.positions.map((position, index) => (
+                      <div key={position} className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
+                        {index + 1}. {position}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <span className="mt-auto inline-flex w-fit rounded-full border border-violet-200/30 bg-violet-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-100">
+                  Escolher esta tiragem
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <button onClick={() => setSpreadIndex((current) => rotateIndex(current, -1, orderedSpreads.length))} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 font-medium text-slate-100 hover:border-violet-300/70">
-            Tiragem anterior
-          </button>
-          <button onClick={() => createReading(selectedSpread)} className="rounded-2xl bg-violet-400 px-5 py-4 font-semibold text-slate-950 hover:bg-violet-300">
-            Revelar cartas
-          </button>
-          <button onClick={() => setSpreadIndex((current) => rotateIndex(current, 1, orderedSpreads.length))} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 font-medium text-slate-100 hover:border-violet-300/70">
-            Próxima tiragem
-          </button>
-        </div>
-
-        <button onClick={() => setStep("theme")} className="mt-5 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
+        <button onClick={() => setStep("theme")} className="mt-6 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
           Voltar para a escolha do tema
         </button>
       </section>
