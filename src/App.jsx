@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import TarotCard from "./components/TarotCard.jsx";
 import { TAROT_DECK } from "./data/tarotDeck.js";
 
@@ -243,6 +243,10 @@ export default function TarotApp() {
   const [step, setStep] = useState("home");
   const [themeIndex, setThemeIndex] = useState(0);
   const [reading, setReading] = useState(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }, [step]);
 
   const selectedTheme = THEMES[themeIndex];
 
