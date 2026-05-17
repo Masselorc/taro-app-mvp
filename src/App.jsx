@@ -472,7 +472,7 @@ export default function TarotApp() {
         {resultDirectMode && <div className="mt-5 rounded-2xl border border-amber-300/40 bg-amber-300/10 p-4 text-amber-100">Modo Direto ativado: leitura mais firme, crua e sem rodeios, mantendo prudência em temas sensíveis.</div>}
 
         <section className={`mt-6 rounded-2xl border p-5 ${resultDirectMode ? "border-amber-100/30 bg-amber-100/10" : "border-amber-100/20 bg-amber-100/10"}`}>
-          <h3 className="font-semibold text-amber-100">Abertura da leitura</h3>
+          <h3 className="font-semibold text-amber-100">Introdução</h3>
           <Paragraphs text={reading.opening} />
         </section>
 
