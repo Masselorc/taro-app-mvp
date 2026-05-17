@@ -254,7 +254,7 @@ export default function TarotApp() {
             onClick={() => setReadingMode((current) => current === "direct" ? "normal" : "direct")}
             className={`rounded-2xl px-5 py-3 font-semibold transition ${isDirectMode ? "bg-amber-300 text-slate-950 hover:bg-amber-200" : "bg-violet-400 text-slate-950 hover:bg-violet-300"}`}
           >
-            {isDirectMode ? "Desativar modo direto" : "Ativar modo direto"}
+            {isDirectMode ? "Desativar verdade nua e crua" : "Ativar verdade nua e crua"}
           </button>
         </div>
       </div>
