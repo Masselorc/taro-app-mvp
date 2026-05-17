@@ -1,8 +1,11 @@
 import {
-  DIRECT_MOOD_PATTERNS,
-  DIRECT_NEED_PATTERNS,
-  DIRECT_THEME_PATTERNS
-} from "../data/directMode.js";
+  directCardAdvice,
+  directFinalAdvice,
+  directInterpretCard,
+  directOpening,
+  directReflection,
+  directSynthesis
+} from "./directReadingEngine.js";
 
 const THEME_CONTEXT = {
   geral: "no seu momento atual",
@@ -85,26 +88,6 @@ const POSITION_CONTEXTS = {
   }
 };
 
-const DIRECT_POSITION_TRUTHS = {
-  "Conselho central": "A verdade central é simples: você não precisa de mais enfeite, precisa de uma postura mais honesta.",
-  "Situação atual": "A situação atual não está pedindo uma explicação bonita. Ela está mostrando o ponto que você precisa parar de contornar.",
-  Desafio: "O desafio não é um mistério místico. É o ponto que você provavelmente já percebeu e ainda tenta negociar.",
-  Conselho: "O conselho não é para decorar a leitura. É para virar atitude, ou então não serve para nada.",
-  "Influência anterior": "O passado ainda está cobrando presença porque alguma lição ficou mal digerida.",
-  "Momento presente": "O presente está pedindo menos reação automática e mais coragem para ver o que está na sua frente.",
-  Tendência: "A tendência não é sentença. É o caminho que continua se você seguir repetindo a mesma postura.",
-  "Sua postura": "A carta está falando de você. Não adianta jogar tudo na conta da outra pessoa.",
-  "Energia percebida da outra parte": "A outra parte pode até importar, mas a leitura não te autoriza a inventar certeza sobre o que alguém sente. Olhe os sinais, não a fantasia.",
-  "Dinâmica entre vocês": "A dinâmica não nasce sozinha. Ela é alimentada pelo que cada lado permite, evita, cobra ou finge que não vê.",
-  "Caminho A": "Esse caminho tem preço. A pergunta é se você está disposto a pagar sem depois fingir surpresa.",
-  "Caminho B": "Essa alternativa também cobra algo. Escolher não é escapar de consequência; é escolher qual consequência você aceita encarar.",
-  "Conselho para decidir": "Decidir exige parar de procurar uma opção sem risco. Isso não existe.",
-  Obstáculo: "O obstáculo está menos escondido do que parece. O difícil é admitir o que ele exige de você.",
-  "Base da questão": "A raiz do problema não está na superfície. Ela está no padrão que você repete, tolera ou alimenta.",
-  Orientação: "A orientação é prática: pare de interpretar tudo e faça o ajuste que a situação está pedindo.",
-  "Tendência ou síntese": "A síntese é o retrato do caminho atual. Se você não mudar nada, não espere um resultado muito diferente."
-};
-
 function isDirect(readingMode) {
   return readingMode === "direct";
 }
@@ -120,86 +103,45 @@ function getPositionContext(position) {
   };
 }
 
-function directCardPunch(card) {
-  const meaning = cleanMeaning(card.shortMeaning);
-
-  if (card.tone === "desafiadora") {
-    return `${card.name} não veio para agradar. Veio para mostrar onde ${meaning} pode estar cobrando uma conta que você preferia não olhar.`;
-  }
-
-  if (card.tone === "favorável") {
-    return `${card.name} até abre uma possibilidade boa, mas não confunda isso com garantia. ${meaning} só vira algo real se você parar de esperar que a carta faça a parte que é sua.`;
-  }
-
-  return `${card.name} coloca na mesa ${meaning}. A parte incômoda é que isso não é abstrato: tem a ver com uma postura concreta que precisa ser revista agora.`;
-}
-
-function directThemePunch(theme) {
-  return DIRECT_THEME_PATTERNS[theme.id] || "O tema escolhido pede menos fantasia e mais responsabilidade sobre o que está acontecendo.";
-}
-
-function toneFromCards(cards, readingMode = "normal") {
+function toneFromCards(cards) {
   const challenging = cards.filter((card) => card.tone === "desafiadora").length;
   const favorable = cards.filter((card) => card.tone === "favorável").length;
 
-  if (isDirect(readingMode)) {
-    if (challenging > favorable) return "O conjunto é incômodo, e é melhor que seja. Tem coisa aqui que não melhora enquanto você continuar explicando, justificando ou esperando que o desconforto desapareça sozinho.";
-    if (favorable > challenging) return "O conjunto até abre caminho, mas carta favorável não é babá. Ela mostra potencial; quem sustenta ou estraga esse potencial é a sua postura.";
-    return "O conjunto é misto: existe saída, mas também existe cobrança. A leitura não está dizendo 'fica tranquilo'. Está dizendo: pare de empurrar com a barriga o que já pede atitude.";
+  if (challenging > favorable) {
+    return "O tom geral pede prudência. Não significa que a leitura seja negativa, mas indica que há algo a encarar com mais honestidade antes de esperar leveza.";
   }
 
-  if (challenging > favorable) return "O tom geral pede prudência. Não significa que a leitura seja negativa, mas indica que há algo a encarar com mais honestidade antes de esperar leveza.";
-  if (favorable > challenging) return "O tom geral traz abertura. Ainda assim, a leitura não fala de garantia automática; ela mostra que existe espaço para agir com mais confiança se houver presença e responsabilidade.";
+  if (favorable > challenging) {
+    return "O tom geral traz abertura. Ainda assim, a leitura não fala de garantia automática; ela mostra que existe espaço para agir com mais confiança se houver presença e responsabilidade.";
+  }
+
   return "O tom geral é misto. A leitura mostra pontos de tensão e de apoio ao mesmo tempo, como se a situação pedisse equilíbrio entre cautela e movimento.";
 }
 
-function suitPattern(cards, readingMode = "normal") {
+function suitPattern(cards) {
   const suits = cards.reduce((acc, card) => {
     if (card.suit) acc[card.suit] = (acc[card.suit] || 0) + 1;
     return acc;
   }, {});
   const mainSuit = Object.entries(suits).sort((a, b) => b[1] - a[1])[0]?.[0];
 
-  const normalMeanings = {
+  const meanings = {
     Paus: "A presença de Paus destaca ação, energia, iniciativa e vontade. A situação pede movimento, mas também direção para não virar impulso.",
     Copas: "A presença de Copas destaca sentimentos, vínculos e escuta emocional. A situação pede sensibilidade, mas também cuidado para não confundir desejo com realidade.",
     Espadas: "A presença de Espadas destaca pensamento, comunicação e decisão. A situação pede clareza mental, mas também cuidado para que a análise não vire dureza ou ansiedade.",
     Ouros: "A presença de Ouros destaca vida prática, recursos e estabilidade. A situação pede organização concreta, paciência e atenção ao que pode ser sustentado no mundo real."
   };
 
-  const directMeanings = {
-    Paus: "Paus coloca ação em destaque. Se você diz que quer mudança, precisa parar de confundir vontade com movimento real.",
-    Copas: "Copas puxa emoção para a mesa. Sentir muito não prova que algo é saudável, recíproco ou digno de continuar ocupando tanto espaço.",
-    Espadas: "Espadas corta desculpa. Aqui, confusão precisa de fato, conversa e decisão — não de mais voltas mentais.",
-    Ouros: "Ouros te puxa para o chão. Desejo, medo e esperança não bastam; importa o que se sustenta na prática."
-  };
-
-  if (!mainSuit) {
-    return isDirect(readingMode)
-      ? "A presença forte de Arcanos Maiores mostra que isso não é só um detalhe. É um padrão pedindo maturidade. Fugir dele só muda o cenário, não muda a lição."
-      : "A presença forte de Arcanos Maiores indica que a leitura toca mais em aprendizado, mudança de consciência e amadurecimento do que em acontecimentos isolados.";
-  }
-
-  return isDirect(readingMode) ? directMeanings[mainSuit] : normalMeanings[mainSuit];
+  return mainSuit ? meanings[mainSuit] : "A presença forte de Arcanos Maiores indica que a leitura toca mais em aprendizado, mudança de consciência e amadurecimento do que em acontecimentos isolados.";
 }
 
 export function interpretCard({ card, position, theme, mood, need, readingMode = "normal" }) {
+  if (isDirect(readingMode)) {
+    return directInterpretCard({ card, position, theme, mood, need });
+  }
+
   const positionContext = getPositionContext(position);
   const themeContext = THEME_CONTEXT[theme?.id] || "na situação consultada";
-
-  if (isDirect(readingMode)) {
-    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
-    const needPattern = DIRECT_NEED_PATTERNS[need.id];
-    const positionTruth = DIRECT_POSITION_TRUTHS[position] || "A carta está apontando para uma verdade que fica inútil se você apenas concordar e não mudar nada.";
-
-    return [
-      `${positionTruth} ${directCardPunch(card)}`,
-      `Na prática, ${card.simpleExplanation} Dentro de ${themeContext}, isso aponta para uma coisa: ${directThemePunch(theme)}`,
-      `${moodPattern.opening} Então pare de tratar essa carta como curiosidade. Ela está mostrando onde você pode estar alimentando o próprio nó — por medo, apego, pressa, orgulho, carência ou comodismo.`,
-      `${needPattern.opening} Se você quer ${need.label.toLowerCase()}, vai precisar pagar o preço disso: olhar para o que incomoda e fazer um ajuste real, não apenas buscar uma frase que te conforte.`,
-      `A verdade desta carta: ${card.shadow || "o padrão já apareceu; a escolha agora é encarar ou continuar repetindo com outro nome."}`
-    ].join("\n\n");
-  }
 
   return [
     `${positionContext.purpose} ${card.name} aparece aqui trazendo o tema de ${cleanMeaning(card.shortMeaning)} ${themeContext}.`,
@@ -211,18 +153,11 @@ export function interpretCard({ card, position, theme, mood, need, readingMode =
 }
 
 export function buildCardAdvice({ card, position, theme, mood, need, readingMode = "normal" }) {
-  const themeContext = THEME_CONTEXT[theme?.id] || "na situação consultada";
-
   if (isDirect(readingMode)) {
-    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
-    const needPattern = DIRECT_NEED_PATTERNS[need.id];
-
-    return [
-      `${card.advice} Mas não transforme isso em frase bonita para salvar no celular e continuar igual. Aplicado ${themeContext}, o conselho é virar comportamento.`,
-      `${moodPattern.advice} ${needPattern.advice}`,
-      `A atitude mínima: escolha uma coisa concreta nas próximas 24 horas. Uma conversa. Um limite. Uma pausa. Uma decisão. Uma organização. Um corte de expectativa. Qualquer coisa que prove que você entendeu a leitura e não veio só colecionar sinal.`
-    ].join("\n\n");
+    return directCardAdvice({ card, position, theme, mood, need });
   }
+
+  const themeContext = THEME_CONTEXT[theme?.id] || "na situação consultada";
 
   return [
     `${card.advice} Aplicado ${themeContext}, esse conselho pede uma atitude que você consiga praticar de verdade, sem transformar a leitura em cobrança impossível.`,
@@ -233,15 +168,7 @@ export function buildCardAdvice({ card, position, theme, mood, need, readingMode
 
 export function buildReadingOpening({ theme, mood, need, spread, readingMode = "normal" }) {
   if (isDirect(readingMode)) {
-    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
-    const needPattern = DIRECT_NEED_PATTERNS[need.id];
-    const themePattern = DIRECT_THEME_PATTERNS[theme.id];
-
-    return [
-      `Você ativou a verdade nua e crua. Então a leitura não vai tentar te agradar: vai apontar onde você pode estar se enganando, adiando decisão ou chamando de destino aquilo que talvez seja padrão repetido.`,
-      `Você escolheu ${theme.label}, chegou ${mood.label.toLowerCase()} e disse que precisa de ${need.label.toLowerCase()}. ${themePattern} ${moodPattern.opening}`,
-      `${needPattern.opening} A tiragem ${spread.label} não está aqui para te entregar uma sentença pronta. Ela está aqui para esfregar na sua frente o que precisa ser visto, inclusive se isso for desconfortável.`
-    ].join("\n\n");
+    return directOpening({ theme, mood, need, spread });
   }
 
   return [
@@ -252,29 +179,17 @@ export function buildReadingOpening({ theme, mood, need, spread, readingMode = "
 }
 
 export function buildSynthesis({ cards, theme, mood, need, readingMode = "normal" }) {
+  if (isDirect(readingMode)) {
+    return directSynthesis({ cards, theme, mood, need });
+  }
+
   const majors = cards.filter((card) => card.arcana === "Maior").length;
   const themeContext = THEME_CONTEXT[theme?.id] || "na situação consultada";
   const cardNames = cards.map((card) => card.name).join(", ");
 
   const arcanaText = majors >= Math.ceil(cards.length / 2)
-    ? isDirect(readingMode)
-      ? "Tem Arcano Maior demais para você tratar isso como detalhe. O assunto está cutucando uma lição maior, e a vida costuma repetir lição que a gente se recusa a aprender."
-      : "A quantidade de Arcanos Maiores dá peso à leitura. Isso sugere que o tema não deve ser tratado apenas como um episódio passageiro, mas como parte de um aprendizado mais amplo."
-    : isDirect(readingMode)
-      ? "A presença maior de Arcanos Menores puxa para a vida prática. Ou seja: menos teoria, menos sinal, menos desculpa. O ajuste precisa aparecer no cotidiano."
-      : "A presença maior de Arcanos Menores aproxima a leitura da vida prática. Isso sugere que pequenas escolhas, conversas, hábitos e atitudes concretas podem alterar bastante o caminho.";
-
-  if (isDirect(readingMode)) {
-    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
-    const needPattern = DIRECT_NEED_PATTERNS[need.id];
-
-    return [
-      `O padrão central entre ${cardNames} é este: o tema se complica ${themeContext} quando você tenta transformar percepção em espera, desconforto em confusão ou desejo em justificativa.`,
-      `${arcanaText} ${suitPattern(cards, readingMode)}`,
-      `${toneFromCards(cards, readingMode)} Como você chegou ${mood.label.toLowerCase()} e busca ${need.label.toLowerCase()}, o recado é direto: ${moodPattern.advice} ${needPattern.advice}`,
-      `A parte mais dura: a leitura não serve para terceirizar responsabilidade para as cartas. Ela serve para te devolver o espelho. Se doer, melhor ainda. Dor honesta costuma ser mais útil do que conforto que mantém tudo igual.`
-    ].join("\n\n");
-  }
+    ? "A quantidade de Arcanos Maiores dá peso à leitura. Isso sugere que o tema não deve ser tratado apenas como um episódio passageiro, mas como parte de um aprendizado mais amplo."
+    : "A presença maior de Arcanos Menores aproxima a leitura da vida prática. Isso sugere que pequenas escolhas, conversas, hábitos e atitudes concretas podem alterar bastante o caminho.";
 
   return [
     `O padrão central aparece na combinação entre ${cardNames}. Lidas em conjunto, as cartas mostram como o tema se organiza ${themeContext}: não como uma resposta única, mas como um conjunto de forças que pedem observação e escolha consciente.`,
@@ -285,20 +200,13 @@ export function buildSynthesis({ cards, theme, mood, need, readingMode = "normal
 }
 
 export function buildFinalAdvice({ cards, theme, mood, need, readingMode = "normal" }) {
+  if (isDirect(readingMode)) {
+    return directFinalAdvice({ cards, theme, mood, need });
+  }
+
   const firstCard = cards[0];
   const lastCard = cards[cards.length - 1];
   const themeContext = THEME_CONTEXT[theme?.id] || "na situação consultada";
-
-  if (isDirect(readingMode)) {
-    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
-    const needPattern = DIRECT_NEED_PATTERNS[need.id];
-
-    return [
-      `Conselho final, sem anestesia: comece pelo que depende de você e pare de fingir que clareza só existe quando não dói. ${moodPattern.advice} ${needPattern.advice}`,
-      `${firstCard.name} abre a leitura com ${cleanMeaning(firstCard.shortMeaning)}. ${lastCard.name} fecha ou orienta o conjunto com ${cleanMeaning(lastCard.shortMeaning)}. Entre uma carta e outra, o recado é simples: perceber padrão e continuar igual é só vaidade espiritual com outro nome.`,
-      `Nas próximas 24 horas, faça algo que prove que você entendeu. Não precisa ser grandioso: um limite, uma conversa, uma pausa, uma organização, uma decisão ou o corte de uma expectativa que você sabe que está te puxando para o mesmo ciclo. Se você não fizer nada, tudo bem — mas então não chame de destino aquilo que também é omissão.`
-    ].join("\n\n");
-  }
 
   return [
     `O conselho final é começar pelo que está sob seu alcance. ${mood.adviceTone} ${need.adviceTone} A leitura não pede que você controle tudo; ela pede que você escolha melhor sua postura diante do que está acontecendo ${themeContext}.`,
@@ -309,9 +217,7 @@ export function buildFinalAdvice({ cards, theme, mood, need, readingMode = "norm
 
 export function buildReflection({ theme, mood, need, readingMode = "normal" }) {
   if (isDirect(readingMode)) {
-    const moodPattern = DIRECT_MOOD_PATTERNS[mood.id];
-    const needPattern = DIRECT_NEED_PATTERNS[need.id];
-    return `${moodPattern.reflection} ${needPattern.reflection}`;
+    return directReflection({ mood, need });
   }
 
   const themeQuestions = {
