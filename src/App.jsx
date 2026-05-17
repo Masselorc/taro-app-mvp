@@ -172,8 +172,8 @@ export default function TarotApp() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 md:px-8">
         <header className="rounded-[2rem] border border-violet-500/20 bg-slate-900/70 p-6 shadow-2xl shadow-violet-950/30">
-          <p className="text-sm uppercase tracking-[0.35em] text-violet-300">Tarô simbólico</p>
-          <h1 className="mt-3 text-4xl font-semibold md:text-6xl">Leitura individualizada</h1>
+          <p className="text-sm uppercase tracking-[0.35em] text-violet-300">Tarô - Leitura de Cartas</p>
+          <h1 className="mt-3 text-4xl font-semibold md:text-6xl">Leitura de Cartas</h1>
           <p className="mt-4 max-w-3xl text-slate-300">Uma experiência de Tarô reflexiva, não determinista e construída para orientar perguntas sem prometer certezas absolutas.</p>
         </header>
 
