@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import TarotCard from "./components/TarotCard.jsx";
+import { DIRECT_MODE_DESCRIPTION, DIRECT_MODE_LABEL } from "./data/directMode.js";
 import { MOODS, NEEDS } from "./data/readingContext.js";
 import { TAROT_DECK } from "./data/tarotDeck.js";
 import {
@@ -167,6 +168,7 @@ export default function TarotApp() {
   const [themeIndex, setThemeIndex] = useState(0);
   const [moodIndex, setMoodIndex] = useState(0);
   const [needIndex, setNeedIndex] = useState(0);
+  const [readingMode, setReadingMode] = useState("normal");
   const [reading, setReading] = useState(null);
 
   useEffect(() => {
@@ -176,6 +178,7 @@ export default function TarotApp() {
   const selectedTheme = THEMES[themeIndex];
   const selectedMood = MOODS[moodIndex];
   const selectedNeed = NEEDS[needIndex];
+  const isDirectMode = readingMode === "direct";
 
   const orderedSpreads = useMemo(() => {
     const recommendedId = RECOMMENDED_SPREAD_BY_THEME[selectedTheme.id] || "three";
@@ -205,8 +208,8 @@ export default function TarotApp() {
       return {
         ...card,
         position,
-        text: interpretCard({ card, position, theme: selectedTheme, mood: selectedMood, need: selectedNeed, spread }),
-        personalAdvice: buildCardAdvice({ card, position, theme: selectedTheme, mood: selectedMood, need: selectedNeed, spread })
+        text: interpretCard({ card, position, theme: selectedTheme, mood: selectedMood, need: selectedNeed, spread, readingMode }),
+        personalAdvice: buildCardAdvice({ card, position, theme: selectedTheme, mood: selectedMood, need: selectedNeed, spread, readingMode })
       };
     });
 
@@ -217,13 +220,14 @@ export default function TarotApp() {
       themeLabel: selectedTheme.label,
       mood: selectedMood,
       need: selectedNeed,
+      readingMode,
       spread,
       warning,
       cards,
-      opening: buildReadingOpening({ theme: selectedTheme, mood: selectedMood, need: selectedNeed, spread }),
-      synthesis: buildSynthesis({ cards, theme: selectedTheme, mood: selectedMood, need: selectedNeed }),
-      advice: buildFinalAdvice({ cards, theme: selectedTheme, mood: selectedMood, need: selectedNeed }),
-      reflection: buildReflection({ theme: selectedTheme, mood: selectedMood, need: selectedNeed })
+      opening: buildReadingOpening({ theme: selectedTheme, mood: selectedMood, need: selectedNeed, spread, readingMode }),
+      synthesis: buildSynthesis({ cards, theme: selectedTheme, mood: selectedMood, need: selectedNeed, readingMode }),
+      advice: buildFinalAdvice({ cards, theme: selectedTheme, mood: selectedMood, need: selectedNeed, readingMode }),
+      reflection: buildReflection({ theme: selectedTheme, mood: selectedMood, need: selectedNeed, readingMode })
     };
     setReading(nextReading);
     setStep("result");
@@ -232,6 +236,29 @@ export default function TarotApp() {
   function startOver() {
     setReading(null);
     setStep("home");
+  }
+
+  function renderModeToggle() {
+    return (
+      <div className={`mx-auto mt-7 max-w-2xl rounded-3xl border p-4 text-left ${isDirectMode ? "border-amber-300/50 bg-amber-300/10" : "border-white/10 bg-slate-950/70"}`}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-100">Modo da leitura</p>
+            <h2 className="mt-1 text-xl font-semibold text-slate-50">{isDirectMode ? DIRECT_MODE_LABEL : "Modo Reflexivo"}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              {isDirectMode ? DIRECT_MODE_DESCRIPTION : "Leitura mais analítica, simbólica e acolhedora, com orientação gradual."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setReadingMode((current) => current === "direct" ? "normal" : "direct")}
+            className={`rounded-2xl px-5 py-3 font-semibold transition ${isDirectMode ? "bg-amber-300 text-slate-950 hover:bg-amber-200" : "bg-violet-400 text-slate-950 hover:bg-violet-300"}`}
+          >
+            {isDirectMode ? "Desativar modo direto" : "Ativar modo direto"}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   function renderHome() {
@@ -249,6 +276,7 @@ export default function TarotApp() {
             </div>
           ))}
         </div>
+        {renderModeToggle()}
         <button onClick={() => setStep("theme")} className="mt-8 rounded-2xl bg-violet-400 px-8 py-4 font-semibold text-slate-950 transition hover:bg-violet-300">
           Começar leitura
         </button>
@@ -360,6 +388,7 @@ export default function TarotApp() {
         <p className="mt-2 text-slate-300">
           Tema: <span className="font-semibold text-violet-100">{selectedTheme.label}</span>. Estado: <span className="font-semibold text-violet-100">{selectedMood.label}</span>. Busca: <span className="font-semibold text-violet-100">{selectedNeed.label}</span>.
         </p>
+        {isDirectMode && <p className="mt-2 text-sm font-semibold text-amber-100">{DIRECT_MODE_LABEL} ativado: a leitura será mais firme e sem rodeios.</p>}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {orderedSpreads.map((spread) => {
@@ -419,6 +448,8 @@ export default function TarotApp() {
   function renderResult() {
     if (!reading) return renderHome();
 
+    const resultDirectMode = reading.readingMode === "direct";
+
     return (
       <section className="mx-auto max-w-5xl rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-slate-950/40 md:p-8">
         <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 5 de 5</p>
@@ -429,6 +460,7 @@ export default function TarotApp() {
             <p className="mt-1 text-slate-300">Estado: {reading.mood.label}</p>
             <p className="mt-1 text-slate-300">Busca: {reading.need.label}</p>
             <p className="mt-1 text-slate-300">Tiragem: {reading.spread.label}</p>
+            <p className="mt-1 text-slate-300">Modo: {resultDirectMode ? DIRECT_MODE_LABEL : "Reflexivo"}</p>
             <p className="mt-1 text-sm text-slate-400">{reading.createdAt}</p>
           </div>
           <button onClick={startOver} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-3 font-medium text-slate-100 hover:border-violet-300/70">
@@ -437,8 +469,9 @@ export default function TarotApp() {
         </div>
 
         {reading.warning && <div className="mt-5 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-amber-100">{reading.warning}</div>}
+        {resultDirectMode && <div className="mt-5 rounded-2xl border border-amber-300/40 bg-amber-300/10 p-4 text-amber-100">Modo Direto ativado: leitura mais firme, crua e sem rodeios, mantendo prudência em temas sensíveis.</div>}
 
-        <section className="mt-6 rounded-2xl border border-amber-100/20 bg-amber-100/10 p-5">
+        <section className={`mt-6 rounded-2xl border p-5 ${resultDirectMode ? "border-amber-100/30 bg-amber-100/10" : "border-amber-100/20 bg-amber-100/10"}`}>
           <h3 className="font-semibold text-amber-100">Abertura da leitura</h3>
           <Paragraphs text={reading.opening} />
         </section>
