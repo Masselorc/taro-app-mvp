@@ -259,7 +259,8 @@ export default function TarotApp() {
 
   const selectedSpread = orderedSpreads[spreadIndex] || orderedSpreads[0];
 
-  function selectTheme() {
+  function selectTheme(index) {
+    setThemeIndex(index);
     setSpreadIndex(0);
     setStep("spread");
   }
@@ -316,34 +317,32 @@ export default function TarotApp() {
 
   function renderThemeSelection() {
     return (
-      <section className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
+      <section className="mx-auto max-w-5xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
         <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 1 de 3</p>
         <h2 className="mt-3 text-3xl font-semibold">Escolha a temática</h2>
-        <p className="mt-2 text-slate-300">Veja uma temática por vez. Avance ou volte até encontrar a área que combina com sua leitura.</p>
+        <p className="mt-2 text-slate-300">Todos os temas aparecem abaixo. Toque na área que combina melhor com a leitura que você deseja fazer.</p>
 
-        <div className="mt-6 rounded-[2rem] border border-violet-200/20 bg-slate-950/80 p-6 text-center">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-amber-100/40 bg-violet-300/10 text-5xl text-amber-100">
-            {selectedTheme.icon}
-          </div>
-          <p className="mt-6 text-sm uppercase tracking-[0.25em] text-slate-400">Tema {themeIndex + 1} de {THEMES.length}</p>
-          <h3 className="mt-2 text-3xl font-semibold text-slate-50">{selectedTheme.label}</h3>
-          <p className="mt-3 text-lg text-violet-100">{selectedTheme.helper}</p>
-          <p className="mt-4 leading-relaxed text-slate-300">{selectedTheme.detail}</p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {THEMES.map((theme, index) => (
+            <button
+              key={theme.id}
+              onClick={() => selectTheme(index)}
+              className="group min-h-[230px] rounded-[1.7rem] border border-white/10 bg-slate-950/80 p-5 text-left shadow-xl shadow-slate-950/30 transition hover:-translate-y-1 hover:border-violet-300/70 hover:bg-violet-950/30 focus:outline-none focus:ring-2 focus:ring-violet-300"
+            >
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-amber-100/40 bg-violet-300/10 text-3xl text-amber-100 transition group-hover:scale-105">
+                {theme.icon}
+              </div>
+              <h3 className="mt-5 text-2xl font-semibold text-slate-50">{theme.label}</h3>
+              <p className="mt-2 text-sm font-medium text-violet-100">{theme.helper}</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-300">{theme.detail}</p>
+              <span className="mt-5 inline-flex rounded-full border border-violet-200/30 bg-violet-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-100">
+                Selecionar
+              </span>
+            </button>
+          ))}
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <button onClick={() => setThemeIndex((current) => rotateIndex(current, -1, THEMES.length))} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 font-medium text-slate-100 hover:border-violet-300/70">
-            Tema anterior
-          </button>
-          <button onClick={selectTheme} className="rounded-2xl bg-violet-400 px-5 py-4 font-semibold text-slate-950 hover:bg-violet-300">
-            Selecionar este tema
-          </button>
-          <button onClick={() => setThemeIndex((current) => rotateIndex(current, 1, THEMES.length))} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 font-medium text-slate-100 hover:border-violet-300/70">
-            Próximo tema
-          </button>
-        </div>
-
-        <button onClick={() => setStep("home")} className="mt-5 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
+        <button onClick={() => setStep("home")} className="mt-6 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
           Voltar ao início
         </button>
       </section>
