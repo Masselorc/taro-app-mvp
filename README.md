@@ -16,7 +16,17 @@ Protótipo funcional em React/Vite para leitura individualizada de Tarô, simbó
 - Tratamento prudente de temas sensíveis.
 - Histórico local no navegador.
 
-## Como rodar
+## Publicação
+
+O projeto está configurado para publicação no GitHub Pages por GitHub Actions.
+
+URL esperada após deploy bem-sucedido:
+
+```txt
+https://masselorc.github.io/taro-app-mvp/
+```
+
+## Como rodar localmente
 
 ```bash
 npm install
