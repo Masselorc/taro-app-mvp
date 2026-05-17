@@ -248,7 +248,6 @@ export default function TarotApp() {
   const [themeIndex, setThemeIndex] = useState(0);
   const [spreadIndex, setSpreadIndex] = useState(0);
   const [reading, setReading] = useState(null);
-  const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem("tarot-history") || "[]"));
 
   const selectedTheme = THEMES[themeIndex];
 
@@ -259,12 +258,6 @@ export default function TarotApp() {
   }, [selectedTheme.id]);
 
   const selectedSpread = orderedSpreads[spreadIndex] || orderedSpreads[0];
-
-  function saveHistory(nextReading) {
-    const next = [nextReading, ...history].slice(0, 8);
-    setHistory(next);
-    localStorage.setItem("tarot-history", JSON.stringify(next));
-  }
 
   function selectTheme() {
     setSpreadIndex(0);
@@ -291,7 +284,6 @@ export default function TarotApp() {
       reflection: reflectiveQuestion(selectedTheme.id)
     };
     setReading(nextReading);
-    saveHistory(nextReading);
     setStep("result");
   }
 
@@ -475,21 +467,6 @@ export default function TarotApp() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 md:px-8">
         {renderCurrentStep()}
-
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
-          <h2 className="text-2xl font-semibold">Histórico local</h2>
-          {history.length === 0 ? <p className="mt-2 text-slate-400">Nenhuma leitura salva neste navegador.</p> : (
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {history.map((item) => (
-                <button key={item.id} onClick={() => { setReading(item); setStep("result"); }} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-left hover:border-violet-300/60">
-                  <p className="text-sm text-slate-400">{item.createdAt}</p>
-                  <p className="mt-1 font-semibold">{item.spread.label}</p>
-                  <p className="mt-1 text-sm text-slate-300">Tema: {item.themeLabel || THEMES.find((themeItem) => themeItem.id === item.theme)?.label || "Leitura"}</p>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
 
         <p className="text-center text-xs text-slate-500">
           Imagens das cartas: baralho Rider-Waite-Smith, via Wikimedia Commons.
