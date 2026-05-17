@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import TarotCard from "./components/TarotCard.jsx";
 import { TAROT_DECK } from "./data/tarotDeck.js";
 
 const THEMES = [
@@ -37,17 +38,17 @@ function normalize(value = "") {
 
 function detectSensitive(theme, question) {
   const text = normalize(`${theme} ${question}`);
-  if (["diagnostico", "tratamento", "remedio", "sintoma", "gravidez"].some((w) => text.includes(w))) {
-    return "O Tarô não deve ser usado para diagnóstico, tratamento ou prognóstico. A leitura pode ser simbólica, focada em autocuidado e busca de apoio adequado.";
+  if (["diagnostico", "tratamento", "remedio", "sintoma", "gravidez"].some((word) => text.includes(word))) {
+    return "O Tarô não deve ser usado para diagnóstico, tratamento ou prognóstico. A leitura pode ser feita de forma simbólica, voltada a autocuidado, equilíbrio e busca de apoio adequado.";
   }
-  if (["investir", "aposta", "emprestimo", "todo meu dinheiro", "cripto"].some((w) => text.includes(w))) {
-    return "A leitura não deve recomendar investimento, compra, venda, empréstimo ou aposta. O foco deve ser prudência, risco e planejamento.";
+  if (["investir", "aposta", "emprestimo", "todo meu dinheiro", "cripto"].some((word) => text.includes(word))) {
+    return "A leitura não deve recomendar investimento, compra, venda, empréstimo ou aposta. O foco será prudência, risco, organização e planejamento.";
   }
-  if (["processo", "advogado", "justica", "sentenca"].some((w) => text.includes(w))) {
+  if (["processo", "advogado", "justica", "sentenca"].some((word) => text.includes(word))) {
     return "O Tarô não substitui orientação jurídica. A leitura pode abordar postura, clareza e cuidado, sem afirmar desfecho legal.";
   }
-  if (["ele sente", "ela sente", "me ama", "vai voltar", "traicao", "trai"].some((w) => text.includes(w))) {
-    return "Perguntas sobre terceiros devem focar na dinâmica percebida, nos limites e na postura do usuário, sem afirmar sentimentos ou ações de outra pessoa como certeza.";
+  if (["ele sente", "ela sente", "me ama", "vai voltar", "traicao", "trai"].some((word) => text.includes(word))) {
+    return "Perguntas sobre terceiros serão tratadas pela dinâmica percebida, pelos limites e pela sua postura, sem afirmar sentimentos ou ações de outra pessoa como certeza.";
   }
   return "";
 }
@@ -70,28 +71,43 @@ function shuffle(cards) {
 }
 
 function kindFor(position) {
-  const p = normalize(position);
-  if (p.includes("conselho") || p.includes("orientacao")) return "advice";
-  if (p.includes("desafio") || p.includes("obstaculo")) return "obstacle";
-  if (p.includes("tendencia") || p.includes("sintese")) return "trend";
-  if (p.includes("base")) return "shadow";
+  const positionText = normalize(position);
+  if (positionText.includes("conselho") || positionText.includes("orientacao")) return "advice";
+  if (positionText.includes("desafio") || positionText.includes("obstaculo")) return "obstacle";
+  if (positionText.includes("tendencia") || positionText.includes("sintese")) return "trend";
+  if (positionText.includes("base")) return "shadow";
   return "essential";
 }
 
 function sentence(text) {
   const value = String(text || "").trim();
-  return value.endsWith(".") ? value : `${value}.`;
+  if (!value) return "";
+  const capitalized = value.charAt(0).toUpperCase() + value.slice(1);
+  return /[.!?]$/.test(capitalized) ? capitalized : `${capitalized}.`;
 }
 
 function interpretCard(card, position, theme) {
   const kind = kindFor(position);
-  const source = card[kind] || card.essential;
   const context = THEME_TEXT[theme] || "na situação consultada";
-  if (kind === "advice") return `${sentence(source)} Aplicada ${context}, esta carta propõe uma postura possível, não uma ordem.`;
-  if (kind === "obstacle") return `${sentence(source)} Como ponto de atenção ${context}, ela mostra um bloqueio que pode ser observado sem fatalismo.`;
-  if (kind === "trend") return `${sentence(source)} Como tendência, indica uma possibilidade condicionada à forma como a situação continuar se desenvolvendo.`;
-  if (kind === "shadow") return `${sentence(source)} Na base da questão, ajuda a perceber uma raiz simbólica da situação.`;
-  return `${sentence(source)} Na posição de “${position}”, ela colore ${context} com esse tema central.`;
+  const base = sentence(card.simpleExplanation || card.essential);
+
+  if (kind === "advice") {
+    return `${base} Como conselho ${context}, a carta pede uma atitude consciente e possível, não uma ordem nem uma previsão fechada.`;
+  }
+
+  if (kind === "obstacle") {
+    return `${base} Como desafio ${context}, ela mostra um ponto que precisa ser observado com mais calma para evitar repetição ou impulso.`;
+  }
+
+  if (kind === "trend") {
+    return `${base} Como tendência, ela indica uma direção possível se a situação continuar seguindo o mesmo ritmo.`;
+  }
+
+  if (kind === "shadow") {
+    return `${base} Na base da questão, ela ajuda a perceber o que pode estar influenciando a situação por trás da aparência imediata.`;
+  }
+
+  return `${base} Na posição de “${position}”, esta carta ajuda a entender o que está mais evidente ${context}.`;
 }
 
 function buildSynthesis(cards, theme) {
@@ -105,12 +121,22 @@ function buildSynthesis(cards, theme) {
   const mainSuit = Object.entries(suits).sort((a, b) => b[1] - a[1])[0]?.[0];
   const context = THEME_TEXT[theme] || "na situação consultada";
   const parts = [];
-  if (majors >= Math.ceil(cards.length / 2)) parts.push("A presença de Arcanos Maiores dá peso simbólico à leitura e sugere aprendizado ou amadurecimento relevante.");
-  if (mainSuit) parts.push(`A predominância de ${mainSuit} orienta a leitura para esse campo simbólico específico.`);
-  if (challenging && favorable) parts.push("O conjunto mostra tensão e abertura ao mesmo tempo: há pontos a encarar, mas também recursos para atravessar a situação com clareza.");
-  else if (challenging) parts.push("O conjunto é exigente, mas não fatalista. A leitura pede prudência, verdade e cuidado com reações automáticas.");
-  else if (favorable) parts.push("O conjunto é favorável, mas não deve ser lido como garantia automática. Ele indica abertura quando há ação consciente.");
-  parts.push(`Em síntese, as cartas sugerem uma leitura reflexiva ${context}, sem fechar o futuro como certeza.`);
+
+  if (majors >= Math.ceil(cards.length / 2)) {
+    parts.push("A presença de Arcanos Maiores dá mais peso à leitura e sugere um aprendizado importante neste momento.");
+  }
+  if (mainSuit) {
+    parts.push(`A predominância de ${mainSuit} mostra que esse campo da vida merece atenção especial.`);
+  }
+  if (challenging && favorable) {
+    parts.push("O conjunto mistura tensão e abertura. Há pontos a encarar, mas também recursos para agir com mais clareza.");
+  } else if (challenging) {
+    parts.push("O conjunto é exigente, mas não fatalista. Ele pede prudência, honestidade e cuidado com reações automáticas.");
+  } else if (favorable) {
+    parts.push("O conjunto é favorável, mas não deve ser lido como garantia automática. Ele indica abertura quando há ação consciente.");
+  }
+
+  parts.push(`Em síntese, as cartas oferecem uma leitura reflexiva ${context}, sem transformar o futuro em certeza.`);
   return parts.join(" ");
 }
 
@@ -161,7 +187,7 @@ export default function TarotApp() {
       warning,
       cards,
       synthesis: buildSynthesis(cards, theme),
-      advice: warning || "O conselho central é agir com clareza, reconhecer o que as cartas destacam e transformar a leitura em reflexão prática, não em certeza absoluta.",
+      advice: warning || "Use a leitura como apoio para refletir. Observe o que as cartas destacam, escolha uma atitude possível e evite transformar a mensagem em certeza absoluta.",
       reflection: reflectiveQuestion(theme)
     };
     setReading(nextReading);
@@ -174,7 +200,7 @@ export default function TarotApp() {
         <header className="rounded-[2rem] border border-violet-500/20 bg-slate-900/70 p-6 shadow-2xl shadow-violet-950/30">
           <p className="text-sm uppercase tracking-[0.35em] text-violet-300">Tarô - Leitura de Cartas</p>
           <h1 className="mt-3 text-4xl font-semibold md:text-6xl">Leitura de Cartas</h1>
-          <p className="mt-4 max-w-3xl text-slate-300">Uma experiência de Tarô reflexiva, não determinista e construída para orientar perguntas sem prometer certezas absolutas.</p>
+          <p className="mt-4 max-w-3xl text-slate-300">Uma experiência de Tarô clara, visual e reflexiva para orientar perguntas sem prometer certezas absolutas.</p>
         </header>
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
@@ -201,7 +227,11 @@ export default function TarotApp() {
           <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
             {!reading ? (
               <div className="flex h-full min-h-[420px] flex-col items-center justify-center text-center text-slate-300">
-                <div className="mb-5 h-28 w-20 rounded-2xl border border-violet-300/50 bg-gradient-to-br from-violet-800 to-slate-900 shadow-xl shadow-violet-950" />
+                <div className="relative mb-5 aspect-[2/3] h-36 overflow-hidden rounded-[1.5rem] border border-amber-100/50 bg-slate-950 shadow-2xl shadow-violet-950">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.22),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(168,85,247,0.30),_transparent_45%)]" />
+                  <div className="absolute inset-4 rounded-[1rem] border border-amber-100/40" />
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl text-amber-100">✦</div>
+                </div>
                 <h2 className="text-2xl font-semibold text-slate-100">Sua leitura aparecerá aqui</h2>
                 <p className="mt-2 max-w-md">Escolha um tema, formule a pergunta e revele as cartas.</p>
               </div>
@@ -214,13 +244,7 @@ export default function TarotApp() {
                 </div>
                 {reading.warning && <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-amber-100">{reading.warning}</div>}
                 <div className="grid gap-4">
-                  {reading.cards.map((card) => (
-                    <div key={`${card.name}-${card.position}`} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                      <p className="text-sm text-violet-300">{card.position}</p>
-                      <h3 className="mt-1 text-xl font-semibold">{card.name}</h3>
-                      <p className="mt-2 text-slate-300">{card.text}</p>
-                    </div>
-                  ))}
+                  {reading.cards.map((card) => <TarotCard key={`${card.name}-${card.position}`} card={card} />)}
                 </div>
                 <section className="rounded-2xl border border-violet-300/20 bg-violet-300/10 p-4">
                   <h3 className="font-semibold">Leitura combinada</h3>
@@ -228,7 +252,7 @@ export default function TarotApp() {
                 </section>
                 <section className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                    <h3 className="font-semibold">Conselho</h3>
+                    <h3 className="font-semibold">Conselho final</h3>
                     <p className="mt-2 text-slate-300">{reading.advice}</p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
