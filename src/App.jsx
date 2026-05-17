@@ -3,24 +3,123 @@ import TarotCard from "./components/TarotCard.jsx";
 import { TAROT_DECK } from "./data/tarotDeck.js";
 
 const THEMES = [
-  ["geral", "Leitura geral", "Momento atual, desafio e conselho."],
-  ["amor", "Amor", "Vínculos, expectativas, comunicação e limites."],
-  ["trabalho", "Trabalho", "Postura profissional, estratégia e próximos passos."],
-  ["decisao", "Decisão", "Comparação simbólica entre caminhos possíveis."],
-  ["espiritualidade", "Espiritualidade", "Sentido, recolhimento, intuição e valores."],
-  ["dinheiro", "Dinheiro", "Prudência, organização, risco e estabilidade."],
-  ["autocuidado", "Autocuidado", "Cuidado, equilíbrio e atenção ao próprio estado."]
-].map(([id, label, helper]) => ({ id, label, helper }));
+  {
+    id: "geral",
+    label: "Leitura geral",
+    helper: "Para entender o clima do momento.",
+    detail: "Use quando você quer uma visão ampla sobre sua fase atual, sem focar em uma área específica.",
+    icon: "✦"
+  },
+  {
+    id: "amor",
+    label: "Amor",
+    helper: "Para vínculos, sentimentos e relações.",
+    detail: "Use para observar sua postura afetiva, a dinâmica da relação e o que precisa de mais clareza emocional.",
+    icon: "♡"
+  },
+  {
+    id: "trabalho",
+    label: "Trabalho",
+    helper: "Para carreira, rotina e postura profissional.",
+    detail: "Use para refletir sobre direção profissional, desafios, reconhecimento, estratégia e próximos passos.",
+    icon: "♜"
+  },
+  {
+    id: "decisao",
+    label: "Decisão",
+    helper: "Para comparar caminhos possíveis.",
+    detail: "Use quando existem duas possibilidades em aberto e você quer enxergar melhor o peso simbólico de cada caminho.",
+    icon: "⚖"
+  },
+  {
+    id: "espiritualidade",
+    label: "Espiritualidade",
+    helper: "Para sentido, intuição e recolhimento.",
+    detail: "Use para observar sua escuta interior, seus valores, sua energia espiritual e o que pede mais presença.",
+    icon: "☾"
+  },
+  {
+    id: "dinheiro",
+    label: "Dinheiro",
+    helper: "Para recursos, prudência e estabilidade.",
+    detail: "Use para refletir sobre organização, cautela, risco, segurança e relação com recursos materiais.",
+    icon: "◈"
+  },
+  {
+    id: "autocuidado",
+    label: "Autocuidado",
+    helper: "Para equilíbrio, descanso e atenção a si.",
+    detail: "Use para observar sua energia, seus limites e o tipo de cuidado que pode estar precisando de atenção.",
+    icon: "✿"
+  }
+];
 
 const SPREADS = [
-  { id: "auto", label: "Escolha automática", positions: [] },
-  { id: "single", label: "Carta única", positions: ["Conselho central"] },
-  { id: "three", label: "Três cartas — Situação, Desafio e Conselho", positions: ["Situação atual", "Desafio", "Conselho"] },
-  { id: "time", label: "Três cartas — Influência, Presente e Tendência", positions: ["Influência anterior", "Momento presente", "Tendência"] },
-  { id: "relationship", label: "Três cartas — Você, o Outro e a Dinâmica", positions: ["Sua postura", "Energia percebida da outra parte", "Dinâmica entre vocês"] },
-  { id: "choice", label: "Três cartas — Caminho A, Caminho B e Conselho", positions: ["Caminho A", "Caminho B", "Conselho para decidir"] },
-  { id: "cross", label: "Cruz simples", positions: ["Situação atual", "Obstáculo", "Base da questão", "Orientação", "Tendência ou síntese"] }
+  {
+    id: "single",
+    label: "Carta única",
+    cards: "1 carta",
+    positions: ["Conselho central"],
+    summary: "Uma resposta simples e direta.",
+    bestFor: "Boa para quando você quer uma orientação rápida, sem aprofundar muito.",
+    implication: "A leitura fica mais objetiva, mas também menos detalhada. Ela aponta uma energia principal."
+  },
+  {
+    id: "three",
+    label: "Situação, Desafio e Conselho",
+    cards: "3 cartas",
+    positions: ["Situação atual", "Desafio", "Conselho"],
+    summary: "A tiragem mais equilibrada para a maioria dos temas.",
+    bestFor: "Boa para entender o que está acontecendo, qual é o ponto de tensão e que postura pode ajudar.",
+    implication: "A leitura ganha mais contexto do que a carta única, sem ficar longa demais."
+  },
+  {
+    id: "time",
+    label: "Influência, Presente e Tendência",
+    cards: "3 cartas",
+    positions: ["Influência anterior", "Momento presente", "Tendência"],
+    summary: "Mostra o movimento da situação ao longo do tempo.",
+    bestFor: "Boa para perceber de onde a energia vem, como aparece agora e para onde pode caminhar.",
+    implication: "Ajuda a enxergar processo, mas a tendência não deve ser lida como destino fixo."
+  },
+  {
+    id: "relationship",
+    label: "Você, o Outro e a Dinâmica",
+    cards: "3 cartas",
+    positions: ["Sua postura", "Energia percebida da outra parte", "Dinâmica entre vocês"],
+    summary: "Focada em relações e vínculos.",
+    bestFor: "Boa para temas afetivos, familiares ou relacionais, sem afirmar sentimentos de terceiros como certeza.",
+    implication: "Mostra a dinâmica simbólica da relação e ajuda a refletir sobre limites, postura e comunicação."
+  },
+  {
+    id: "choice",
+    label: "Caminho A, Caminho B e Conselho",
+    cards: "3 cartas",
+    positions: ["Caminho A", "Caminho B", "Conselho para decidir"],
+    summary: "Compara duas possibilidades.",
+    bestFor: "Boa quando você precisa escolher entre dois caminhos e quer refletir sobre cada alternativa.",
+    implication: "A leitura não decide por você. Ela organiza simbolicamente os pontos de atenção de cada opção."
+  },
+  {
+    id: "cross",
+    label: "Cruz simples",
+    cards: "5 cartas",
+    positions: ["Situação atual", "Obstáculo", "Base da questão", "Orientação", "Tendência ou síntese"],
+    summary: "Uma leitura mais completa e profunda.",
+    bestFor: "Boa para temas complexos, repetitivos ou quando você quer mais camadas de interpretação.",
+    implication: "A leitura fica mais rica, mas também mais longa. Ela mostra contexto, bloqueio, raiz, orientação e tendência."
+  }
 ];
+
+const RECOMMENDED_SPREAD_BY_THEME = {
+  geral: "three",
+  amor: "relationship",
+  trabalho: "three",
+  decisao: "choice",
+  espiritualidade: "time",
+  dinheiro: "three",
+  autocuidado: "three"
+};
 
 const THEME_TEXT = {
   geral: "no seu momento atual",
@@ -46,13 +145,6 @@ function getThemeWarning(theme) {
   }
 
   return "";
-}
-
-function chooseSpread(theme) {
-  if (theme === "decisao") return "choice";
-  if (theme === "amor") return "relationship";
-  if (theme === "espiritualidade") return "time";
-  return "three";
 }
 
 function shuffle(cards) {
@@ -147,16 +239,26 @@ function reflectiveQuestion(theme) {
   return questions[theme] || questions.geral;
 }
 
+function rotateIndex(index, direction, length) {
+  return (index + direction + length) % length;
+}
+
 export default function TarotApp() {
-  const [theme, setTheme] = useState("geral");
-  const [spreadId, setSpreadId] = useState("auto");
+  const [step, setStep] = useState("home");
+  const [themeIndex, setThemeIndex] = useState(0);
+  const [spreadIndex, setSpreadIndex] = useState(0);
   const [reading, setReading] = useState(null);
   const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem("tarot-history") || "[]"));
 
-  const selectedSpread = useMemo(() => {
-    const id = spreadId === "auto" ? chooseSpread(theme) : spreadId;
-    return SPREADS.find((spread) => spread.id === id) || SPREADS[2];
-  }, [spreadId, theme]);
+  const selectedTheme = THEMES[themeIndex];
+
+  const orderedSpreads = useMemo(() => {
+    const recommendedId = RECOMMENDED_SPREAD_BY_THEME[selectedTheme.id] || "three";
+    const recommended = SPREADS.find((spread) => spread.id === recommendedId);
+    return [recommended, ...SPREADS.filter((spread) => spread.id !== recommendedId)].filter(Boolean);
+  }, [selectedTheme.id]);
+
+  const selectedSpread = orderedSpreads[spreadIndex] || orderedSpreads[0];
 
   function saveHistory(nextReading) {
     const next = [nextReading, ...history].slice(0, 8);
@@ -164,111 +266,234 @@ export default function TarotApp() {
     localStorage.setItem("tarot-history", JSON.stringify(next));
   }
 
-  function createReading() {
-    const warning = getThemeWarning(theme);
-    const cards = shuffle(TAROT_DECK).slice(0, selectedSpread.positions.length).map((card, index) => ({
+  function selectTheme() {
+    setSpreadIndex(0);
+    setStep("spread");
+  }
+
+  function createReading(spread = selectedSpread) {
+    const warning = getThemeWarning(selectedTheme.id);
+    const cards = shuffle(TAROT_DECK).slice(0, spread.positions.length).map((card, index) => ({
       ...card,
-      position: selectedSpread.positions[index],
-      text: interpretCard(card, selectedSpread.positions[index], theme)
+      position: spread.positions[index],
+      text: interpretCard(card, spread.positions[index], selectedTheme.id)
     }));
     const nextReading = {
       id: crypto.randomUUID(),
       createdAt: new Date().toLocaleString("pt-BR"),
-      theme,
-      spread: selectedSpread,
+      theme: selectedTheme.id,
+      themeLabel: selectedTheme.label,
+      spread,
       warning,
       cards,
-      synthesis: buildSynthesis(cards, theme),
+      synthesis: buildSynthesis(cards, selectedTheme.id),
       advice: warning || "Use a leitura como apoio para refletir. Observe o que as cartas destacam, escolha uma atitude possível e evite transformar a mensagem em certeza absoluta.",
-      reflection: reflectiveQuestion(theme)
+      reflection: reflectiveQuestion(selectedTheme.id)
     };
     setReading(nextReading);
     saveHistory(nextReading);
+    setStep("result");
+  }
+
+  function startOver() {
+    setReading(null);
+    setStep("home");
+  }
+
+  function renderHome() {
+    return (
+      <section className="mx-auto max-w-3xl rounded-[2rem] border border-violet-500/20 bg-slate-900/70 p-6 text-center shadow-2xl shadow-violet-950/30 md:p-10">
+        <p className="text-sm uppercase tracking-[0.35em] text-violet-300">Tarô - Leitura de Cartas</p>
+        <h1 className="mt-4 text-4xl font-semibold md:text-6xl">Escolha sua leitura</h1>
+        <p className="mt-5 text-lg leading-relaxed text-slate-300">
+          Você será guiado passo a passo: primeiro escolhe o tema, depois entende as opções de tiragem e, por fim, revela as cartas.
+        </p>
+        <div className="mx-auto mt-8 grid max-w-md grid-cols-3 gap-3">
+          {["☾", "✦", "☀"].map((symbol) => (
+            <div key={symbol} className="flex aspect-[2/3] items-center justify-center rounded-3xl border border-amber-100/40 bg-slate-950 text-4xl text-amber-100 shadow-xl shadow-violet-950/40">
+              {symbol}
+            </div>
+          ))}
+        </div>
+        <button onClick={() => setStep("theme")} className="mt-8 rounded-2xl bg-violet-400 px-8 py-4 font-semibold text-slate-950 transition hover:bg-violet-300">
+          Começar leitura
+        </button>
+      </section>
+    );
+  }
+
+  function renderThemeSelection() {
+    return (
+      <section className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
+        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 1 de 3</p>
+        <h2 className="mt-3 text-3xl font-semibold">Escolha a temática</h2>
+        <p className="mt-2 text-slate-300">Veja uma temática por vez. Avance ou volte até encontrar a área que combina com sua leitura.</p>
+
+        <div className="mt-6 rounded-[2rem] border border-violet-200/20 bg-slate-950/80 p-6 text-center">
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-amber-100/40 bg-violet-300/10 text-5xl text-amber-100">
+            {selectedTheme.icon}
+          </div>
+          <p className="mt-6 text-sm uppercase tracking-[0.25em] text-slate-400">Tema {themeIndex + 1} de {THEMES.length}</p>
+          <h3 className="mt-2 text-3xl font-semibold text-slate-50">{selectedTheme.label}</h3>
+          <p className="mt-3 text-lg text-violet-100">{selectedTheme.helper}</p>
+          <p className="mt-4 leading-relaxed text-slate-300">{selectedTheme.detail}</p>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <button onClick={() => setThemeIndex((current) => rotateIndex(current, -1, THEMES.length))} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 font-medium text-slate-100 hover:border-violet-300/70">
+            Tema anterior
+          </button>
+          <button onClick={selectTheme} className="rounded-2xl bg-violet-400 px-5 py-4 font-semibold text-slate-950 hover:bg-violet-300">
+            Selecionar este tema
+          </button>
+          <button onClick={() => setThemeIndex((current) => rotateIndex(current, 1, THEMES.length))} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 font-medium text-slate-100 hover:border-violet-300/70">
+            Próximo tema
+          </button>
+        </div>
+
+        <button onClick={() => setStep("home")} className="mt-5 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
+          Voltar ao início
+        </button>
+      </section>
+    );
+  }
+
+  function renderSpreadSelection() {
+    const isRecommended = selectedSpread.id === RECOMMENDED_SPREAD_BY_THEME[selectedTheme.id];
+
+    return (
+      <section className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
+        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 2 de 3</p>
+        <h2 className="mt-3 text-3xl font-semibold">Escolha a tiragem</h2>
+        <p className="mt-2 text-slate-300">
+          Tema escolhido: <span className="font-semibold text-violet-100">{selectedTheme.label}</span>. Agora escolha quantas cartas e qual tipo de leitura faz mais sentido.
+        </p>
+
+        <div className="mt-6 rounded-[2rem] border border-amber-100/20 bg-slate-950/80 p-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="rounded-full border border-amber-100/30 bg-amber-100/10 px-3 py-1 text-sm font-semibold text-amber-100">{selectedSpread.cards}</span>
+            {isRecommended && <span className="rounded-full border border-violet-200/30 bg-violet-300/10 px-3 py-1 text-sm font-semibold text-violet-100">Recomendada para este tema</span>}
+            <span className="text-sm text-slate-400">Tiragem {spreadIndex + 1} de {orderedSpreads.length}</span>
+          </div>
+
+          <h3 className="mt-5 text-3xl font-semibold text-slate-50">{selectedSpread.label}</h3>
+          <p className="mt-3 text-lg text-violet-100">{selectedSpread.summary}</p>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <h4 className="font-semibold text-amber-100">Quando escolher</h4>
+              <p className="mt-2 leading-relaxed text-slate-300">{selectedSpread.bestFor}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <h4 className="font-semibold text-amber-100">O que isso muda</h4>
+              <p className="mt-2 leading-relaxed text-slate-300">{selectedSpread.implication}</p>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-violet-200/20 bg-violet-300/10 p-4">
+            <h4 className="font-semibold text-violet-100">Posições das cartas</h4>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {selectedSpread.positions.map((position, index) => (
+                <div key={position} className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
+                  {index + 1}. {position}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <button onClick={() => setSpreadIndex((current) => rotateIndex(current, -1, orderedSpreads.length))} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 font-medium text-slate-100 hover:border-violet-300/70">
+            Tiragem anterior
+          </button>
+          <button onClick={() => createReading(selectedSpread)} className="rounded-2xl bg-violet-400 px-5 py-4 font-semibold text-slate-950 hover:bg-violet-300">
+            Revelar cartas
+          </button>
+          <button onClick={() => setSpreadIndex((current) => rotateIndex(current, 1, orderedSpreads.length))} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 font-medium text-slate-100 hover:border-violet-300/70">
+            Próxima tiragem
+          </button>
+        </div>
+
+        <button onClick={() => setStep("theme")} className="mt-5 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
+          Voltar para a escolha do tema
+        </button>
+      </section>
+    );
+  }
+
+  function renderResult() {
+    if (!reading) return renderHome();
+
+    return (
+      <section className="mx-auto max-w-5xl rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-slate-950/40 md:p-8">
+        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 3 de 3</p>
+        <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold">Resultado da leitura</h2>
+            <p className="mt-2 text-slate-300">Tema: {reading.themeLabel}</p>
+            <p className="mt-1 text-slate-300">Tiragem: {reading.spread.label}</p>
+            <p className="mt-1 text-sm text-slate-400">{reading.createdAt}</p>
+          </div>
+          <button onClick={startOver} className="rounded-2xl border border-white/10 bg-slate-950 px-5 py-3 font-medium text-slate-100 hover:border-violet-300/70">
+            Nova leitura
+          </button>
+        </div>
+
+        {reading.warning && <div className="mt-5 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-amber-100">{reading.warning}</div>}
+
+        <div className="mt-6 grid gap-5">
+          {reading.cards.map((card) => <TarotCard key={`${card.name}-${card.position}`} card={card} />)}
+        </div>
+
+        <section className="mt-5 rounded-2xl border border-violet-300/20 bg-violet-300/10 p-4">
+          <h3 className="font-semibold">Leitura combinada</h3>
+          <p className="mt-2 leading-relaxed text-slate-300">{reading.synthesis}</p>
+        </section>
+
+        <section className="mt-5 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+            <h3 className="font-semibold">Conselho final</h3>
+            <p className="mt-2 leading-relaxed text-slate-300">{reading.advice}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+            <h3 className="font-semibold">Pergunta para reflexão</h3>
+            <p className="mt-2 leading-relaxed text-slate-300">{reading.reflection}</p>
+          </div>
+        </section>
+      </section>
+    );
+  }
+
+  function renderCurrentStep() {
+    if (step === "theme") return renderThemeSelection();
+    if (step === "spread") return renderSpreadSelection();
+    if (step === "result") return renderResult();
+    return renderHome();
   }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 md:px-8">
-        <header className="rounded-[2rem] border border-violet-500/20 bg-slate-900/70 p-6 shadow-2xl shadow-violet-950/30">
-          <p className="text-sm uppercase tracking-[0.35em] text-violet-300">Tarô - Leitura de Cartas</p>
-          <h1 className="mt-3 text-4xl font-semibold md:text-6xl">Leitura de Cartas</h1>
-          <p className="mt-4 max-w-3xl text-slate-300">Escolha um tema, selecione uma tiragem e revele as cartas para uma leitura clara, visual e reflexiva.</p>
-        </header>
-
-        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <form className="rounded-3xl border border-white/10 bg-white/5 p-5" onSubmit={(event) => { event.preventDefault(); createReading(); }}>
-            <h2 className="text-2xl font-semibold">Preparar tiragem</h2>
-            <label className="mt-5 block text-sm font-medium text-slate-300">Tema</label>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              {THEMES.map((item) => (
-                <button type="button" key={item.id} onClick={() => setTheme(item.id)} className={`rounded-2xl border p-3 text-left transition ${theme === item.id ? "border-violet-300 bg-violet-500/20" : "border-white/10 bg-slate-900/80 hover:border-violet-300/60"}`}>
-                  <span className="block font-medium">{item.label}</span>
-                  <span className="mt-1 block text-xs text-slate-400">{item.helper}</span>
-                </button>
-              ))}
-            </div>
-            <label className="mt-5 block text-sm font-medium text-slate-300" htmlFor="spread">Tiragem</label>
-            <select id="spread" value={spreadId} onChange={(event) => setSpreadId(event.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 p-4 text-slate-100 outline-none focus:border-violet-300">
-              {SPREADS.map((spread) => <option key={spread.id} value={spread.id}>{spread.label}</option>)}
-            </select>
-            <button type="submit" className="mt-6 w-full rounded-2xl bg-violet-400 px-5 py-4 font-semibold text-slate-950 transition hover:bg-violet-300">Embaralhar e revelar cartas</button>
-          </form>
-
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
-            {!reading ? (
-              <div className="flex h-full min-h-[420px] flex-col items-center justify-center text-center text-slate-300">
-                <div className="relative mb-5 aspect-[2/3] h-36 overflow-hidden rounded-[1.5rem] border border-amber-100/50 bg-slate-950 shadow-2xl shadow-violet-950">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.22),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(168,85,247,0.30),_transparent_45%)]" />
-                  <div className="absolute inset-4 rounded-[1rem] border border-amber-100/40" />
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl text-amber-100">✦</div>
-                </div>
-                <h2 className="text-2xl font-semibold text-slate-100">Sua leitura aparecerá aqui</h2>
-                <p className="mt-2 max-w-md">Escolha um tema, selecione a tiragem e revele as cartas.</p>
-              </div>
-            ) : (
-              <article className="space-y-5">
-                <div>
-                  <p className="text-sm text-violet-300">{reading.createdAt}</p>
-                  <h2 className="mt-1 text-2xl font-semibold">{reading.spread.label}</h2>
-                  <p className="mt-2 text-slate-300">Tema: {THEMES.find((item) => item.id === reading.theme)?.label || "Leitura"}</p>
-                </div>
-                {reading.warning && <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-amber-100">{reading.warning}</div>}
-                <div className="grid gap-4">
-                  {reading.cards.map((card) => <TarotCard key={`${card.name}-${card.position}`} card={card} />)}
-                </div>
-                <section className="rounded-2xl border border-violet-300/20 bg-violet-300/10 p-4">
-                  <h3 className="font-semibold">Leitura combinada</h3>
-                  <p className="mt-2 text-slate-300">{reading.synthesis}</p>
-                </section>
-                <section className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                    <h3 className="font-semibold">Conselho final</h3>
-                    <p className="mt-2 text-slate-300">{reading.advice}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                    <h3 className="font-semibold">Pergunta para reflexão</h3>
-                    <p className="mt-2 text-slate-300">{reading.reflection}</p>
-                  </div>
-                </section>
-              </article>
-            )}
-          </section>
-        </section>
+        {renderCurrentStep()}
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
           <h2 className="text-2xl font-semibold">Histórico local</h2>
           {history.length === 0 ? <p className="mt-2 text-slate-400">Nenhuma leitura salva neste navegador.</p> : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {history.map((item) => (
-                <button key={item.id} onClick={() => setReading(item)} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-left hover:border-violet-300/60">
+                <button key={item.id} onClick={() => { setReading(item); setStep("result"); }} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-left hover:border-violet-300/60">
                   <p className="text-sm text-slate-400">{item.createdAt}</p>
                   <p className="mt-1 font-semibold">{item.spread.label}</p>
-                  <p className="mt-1 text-sm text-slate-300">Tema: {THEMES.find((themeItem) => themeItem.id === item.theme)?.label || "Leitura"}</p>
+                  <p className="mt-1 text-sm text-slate-300">Tema: {item.themeLabel || THEMES.find((themeItem) => themeItem.id === item.theme)?.label || "Leitura"}</p>
                 </button>
               ))}
             </div>
           )}
         </section>
+
+        <p className="text-center text-xs text-slate-500">
+          Imagens das cartas: baralho Rider-Waite-Smith, via Wikimedia Commons.
+        </p>
       </section>
     </main>
   );
