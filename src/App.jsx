@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import TarotCard from "./components/TarotCard.jsx";
+import { MOODS, NEEDS } from "./data/readingContext.js";
 import { TAROT_DECK } from "./data/tarotDeck.js";
+import {
+  buildCardAdvice,
+  buildFinalAdvice,
+  buildReadingOpening,
+  buildReflection,
+  buildSynthesis,
+  interpretCard
+} from "./services/readingEngine.js";
 
 const THEMES = [
   {
@@ -121,20 +130,6 @@ const RECOMMENDED_SPREAD_BY_THEME = {
   autocuidado: "three"
 };
 
-const THEME_TEXT = {
-  geral: "no seu momento atual",
-  amor: "na vida afetiva",
-  trabalho: "no campo profissional",
-  decisao: "diante dessa decisão",
-  espiritualidade: "na sua busca de sentido",
-  dinheiro: "na relação com recursos e estabilidade",
-  autocuidado: "na relação com cuidado e equilíbrio"
-};
-
-function normalize(value = "") {
-  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
 function getThemeWarning(theme) {
   if (theme === "dinheiro") {
     return "Esta leitura não substitui orientação financeira. Use as cartas como apoio reflexivo sobre prudência, risco, organização e planejamento.";
@@ -156,92 +151,22 @@ function shuffle(cards) {
   return deck;
 }
 
-function kindFor(position) {
-  const positionText = normalize(position);
-  if (positionText.includes("conselho") || positionText.includes("orientacao")) return "advice";
-  if (positionText.includes("desafio") || positionText.includes("obstaculo")) return "obstacle";
-  if (positionText.includes("tendencia") || positionText.includes("sintese")) return "trend";
-  if (positionText.includes("base")) return "shadow";
-  return "essential";
-}
-
-function sentence(text) {
-  const value = String(text || "").trim();
-  if (!value) return "";
-  const capitalized = value.charAt(0).toUpperCase() + value.slice(1);
-  return /[.!?]$/.test(capitalized) ? capitalized : `${capitalized}.`;
-}
-
-function interpretCard(card, position, theme) {
-  const kind = kindFor(position);
-  const context = THEME_TEXT[theme] || "na situação consultada";
-  const base = sentence(card.simpleExplanation || card.essential);
-
-  if (kind === "advice") {
-    return `${base} Como conselho ${context}, a carta pede uma atitude consciente e possível, não uma ordem nem uma previsão fechada.`;
-  }
-
-  if (kind === "obstacle") {
-    return `${base} Como desafio ${context}, ela mostra um ponto que precisa ser observado com mais calma para evitar repetição ou impulso.`;
-  }
-
-  if (kind === "trend") {
-    return `${base} Como tendência, ela indica uma direção possível se a situação continuar seguindo o mesmo ritmo.`;
-  }
-
-  if (kind === "shadow") {
-    return `${base} Na base da questão, ela ajuda a perceber o que pode estar influenciando a situação por trás da aparência imediata.`;
-  }
-
-  return `${base} Na posição de “${position}”, esta carta ajuda a entender o que está mais evidente ${context}.`;
-}
-
-function buildSynthesis(cards, theme) {
-  const majors = cards.filter((card) => card.arcana === "Maior").length;
-  const challenging = cards.filter((card) => card.tone === "desafiadora").length;
-  const favorable = cards.filter((card) => card.tone === "favorável").length;
-  const suits = cards.reduce((acc, card) => {
-    if (card.suit) acc[card.suit] = (acc[card.suit] || 0) + 1;
-    return acc;
-  }, {});
-  const mainSuit = Object.entries(suits).sort((a, b) => b[1] - a[1])[0]?.[0];
-  const context = THEME_TEXT[theme] || "na situação consultada";
-  const parts = [];
-
-  if (majors >= Math.ceil(cards.length / 2)) {
-    parts.push("A presença de Arcanos Maiores dá mais peso à leitura e sugere um aprendizado importante neste momento.");
-  }
-  if (mainSuit) {
-    parts.push(`A predominância de ${mainSuit} mostra que esse campo da vida merece atenção especial.`);
-  }
-  if (challenging && favorable) {
-    parts.push("O conjunto mistura tensão e abertura. Há pontos a encarar, mas também recursos para agir com mais clareza.");
-  } else if (challenging) {
-    parts.push("O conjunto é exigente, mas não fatalista. Ele pede prudência, honestidade e cuidado com reações automáticas.");
-  } else if (favorable) {
-    parts.push("O conjunto é favorável, mas não deve ser lido como garantia automática. Ele indica abertura quando há ação consciente.");
-  }
-
-  parts.push(`Em síntese, as cartas oferecem uma leitura reflexiva ${context}, sem transformar o futuro em certeza.`);
-  return parts.join(" ");
-}
-
-function reflectiveQuestion(theme) {
-  const questions = {
-    geral: "O que este momento está pedindo que você enxergue com mais calma?",
-    amor: "Que postura preserva melhor sua clareza e seus limites afetivos agora?",
-    trabalho: "Qual atitude concreta pode trazer mais consistência ao seu caminho profissional?",
-    decisao: "Qual escolha parece mais alinhada com seus valores e condições reais?",
-    espiritualidade: "Que prática ou silêncio pode fortalecer sua escuta interior?",
-    dinheiro: "Onde prudência e planejamento podem substituir ansiedade por controle?",
-    autocuidado: "Que cuidado real você vem adiando e precisa observar com mais atenção?"
-  };
-  return questions[theme] || questions.geral;
+function Paragraphs({ text }) {
+  return String(text || "")
+    .split("\n\n")
+    .filter(Boolean)
+    .map((paragraph) => (
+      <p key={paragraph.slice(0, 50)} className="mt-3 leading-relaxed text-slate-300">
+        {paragraph}
+      </p>
+    ));
 }
 
 export default function TarotApp() {
   const [step, setStep] = useState("home");
   const [themeIndex, setThemeIndex] = useState(0);
+  const [moodIndex, setMoodIndex] = useState(0);
+  const [needIndex, setNeedIndex] = useState(0);
   const [reading, setReading] = useState(null);
 
   useEffect(() => {
@@ -249,6 +174,8 @@ export default function TarotApp() {
   }, [step]);
 
   const selectedTheme = THEMES[themeIndex];
+  const selectedMood = MOODS[moodIndex];
+  const selectedNeed = NEEDS[needIndex];
 
   const orderedSpreads = useMemo(() => {
     const recommendedId = RECOMMENDED_SPREAD_BY_THEME[selectedTheme.id] || "three";
@@ -258,27 +185,45 @@ export default function TarotApp() {
 
   function selectTheme(index) {
     setThemeIndex(index);
+    setStep("mood");
+  }
+
+  function selectMood(index) {
+    setMoodIndex(index);
+    setStep("need");
+  }
+
+  function selectNeed(index) {
+    setNeedIndex(index);
     setStep("spread");
   }
 
   function createReading(spread) {
     const warning = getThemeWarning(selectedTheme.id);
-    const cards = shuffle(TAROT_DECK).slice(0, spread.positions.length).map((card, index) => ({
-      ...card,
-      position: spread.positions[index],
-      text: interpretCard(card, spread.positions[index], selectedTheme.id)
-    }));
+    const cards = shuffle(TAROT_DECK).slice(0, spread.positions.length).map((card, index) => {
+      const position = spread.positions[index];
+      return {
+        ...card,
+        position,
+        text: interpretCard({ card, position, theme: selectedTheme, mood: selectedMood, need: selectedNeed, spread }),
+        personalAdvice: buildCardAdvice({ card, position, theme: selectedTheme, mood: selectedMood, need: selectedNeed, spread })
+      };
+    });
+
     const nextReading = {
       id: crypto.randomUUID(),
       createdAt: new Date().toLocaleString("pt-BR"),
       theme: selectedTheme.id,
       themeLabel: selectedTheme.label,
+      mood: selectedMood,
+      need: selectedNeed,
       spread,
       warning,
       cards,
-      synthesis: buildSynthesis(cards, selectedTheme.id),
-      advice: warning || "Use a leitura como apoio para refletir. Observe o que as cartas destacam, escolha uma atitude possível e evite transformar a mensagem em certeza absoluta.",
-      reflection: reflectiveQuestion(selectedTheme.id)
+      opening: buildReadingOpening({ theme: selectedTheme, mood: selectedMood, need: selectedNeed, spread }),
+      synthesis: buildSynthesis({ cards, theme: selectedTheme, mood: selectedMood, need: selectedNeed }),
+      advice: buildFinalAdvice({ cards, theme: selectedTheme, mood: selectedMood, need: selectedNeed }),
+      reflection: buildReflection({ theme: selectedTheme, mood: selectedMood, need: selectedNeed })
     };
     setReading(nextReading);
     setStep("result");
@@ -295,7 +240,7 @@ export default function TarotApp() {
         <p className="text-sm uppercase tracking-[0.35em] text-violet-300">Tarô - Leitura de Cartas</p>
         <h1 className="mt-4 text-4xl font-semibold md:text-6xl">Escolha sua leitura</h1>
         <p className="mt-5 text-lg leading-relaxed text-slate-300">
-          Você será guiado passo a passo: primeiro escolhe o tema, depois entende as opções de tiragem e, por fim, revela as cartas.
+          Você será guiado passo a passo: tema, estado atual, necessidade principal, tiragem e resultado final.
         </p>
         <div className="mx-auto mt-8 grid max-w-md grid-cols-3 gap-3">
           {["☾", "✦", "☀"].map((symbol) => (
@@ -314,7 +259,7 @@ export default function TarotApp() {
   function renderThemeSelection() {
     return (
       <section className="mx-auto max-w-5xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
-        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 1 de 3</p>
+        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 1 de 5</p>
         <h2 className="mt-3 text-3xl font-semibold">Escolha a temática</h2>
         <p className="mt-2 text-slate-300">Todos os temas aparecem abaixo. Toque na área que combina melhor com a leitura que você deseja fazer.</p>
 
@@ -345,13 +290,75 @@ export default function TarotApp() {
     );
   }
 
+  function renderMoodSelection() {
+    return (
+      <section className="mx-auto max-w-5xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
+        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 2 de 5</p>
+        <h2 className="mt-3 text-3xl font-semibold">Como você chega para esta leitura?</h2>
+        <p className="mt-2 text-slate-300">Essa escolha ajuda a deixar o resultado mais pessoal. Ela informa o tom emocional com que as cartas serão interpretadas.</p>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {MOODS.map((mood, index) => (
+            <button
+              key={mood.id}
+              onClick={() => selectMood(index)}
+              className="group min-h-[220px] rounded-[1.7rem] border border-white/10 bg-slate-950/80 p-5 text-left shadow-xl shadow-slate-950/30 transition hover:-translate-y-1 hover:border-violet-300/70 hover:bg-violet-950/30 focus:outline-none focus:ring-2 focus:ring-violet-300"
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-amber-100/40 bg-violet-300/10 text-3xl text-amber-100 transition group-hover:scale-105">
+                {mood.icon}
+              </div>
+              <h3 className="mt-5 text-xl font-semibold text-slate-50">{mood.label}</h3>
+              <p className="mt-2 text-sm font-medium text-violet-100">{mood.helper}</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-300">{mood.detail}</p>
+            </button>
+          ))}
+        </div>
+
+        <button onClick={() => setStep("theme")} className="mt-6 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
+          Voltar para a temática
+        </button>
+      </section>
+    );
+  }
+
+  function renderNeedSelection() {
+    return (
+      <section className="mx-auto max-w-5xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
+        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 3 de 5</p>
+        <h2 className="mt-3 text-3xl font-semibold">O que você mais precisa agora?</h2>
+        <p className="mt-2 text-slate-300">Essa escolha direciona a leitura. As cartas serão interpretadas considerando o tipo de resposta que você procura.</p>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {NEEDS.map((need, index) => (
+            <button
+              key={need.id}
+              onClick={() => selectNeed(index)}
+              className="group min-h-[220px] rounded-[1.7rem] border border-white/10 bg-slate-950/80 p-5 text-left shadow-xl shadow-slate-950/30 transition hover:-translate-y-1 hover:border-violet-300/70 hover:bg-violet-950/30 focus:outline-none focus:ring-2 focus:ring-violet-300"
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-amber-100/40 bg-violet-300/10 text-3xl text-amber-100 transition group-hover:scale-105">
+                {need.icon}
+              </div>
+              <h3 className="mt-5 text-xl font-semibold text-slate-50">{need.label}</h3>
+              <p className="mt-2 text-sm font-medium text-violet-100">{need.helper}</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-300">{need.detail}</p>
+            </button>
+          ))}
+        </div>
+
+        <button onClick={() => setStep("mood")} className="mt-6 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
+          Voltar para o estado atual
+        </button>
+      </section>
+    );
+  }
+
   function renderSpreadSelection() {
     return (
       <section className="mx-auto max-w-6xl rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40 md:p-8">
-        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 2 de 3</p>
+        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 4 de 5</p>
         <h2 className="mt-3 text-3xl font-semibold">Escolha a tiragem</h2>
         <p className="mt-2 text-slate-300">
-          Tema escolhido: <span className="font-semibold text-violet-100">{selectedTheme.label}</span>. Todas as opções aparecem abaixo com a diferença entre elas.
+          Tema: <span className="font-semibold text-violet-100">{selectedTheme.label}</span>. Estado: <span className="font-semibold text-violet-100">{selectedMood.label}</span>. Busca: <span className="font-semibold text-violet-100">{selectedNeed.label}</span>.
         </p>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -402,8 +409,8 @@ export default function TarotApp() {
           })}
         </div>
 
-        <button onClick={() => setStep("theme")} className="mt-6 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
-          Voltar para a escolha do tema
+        <button onClick={() => setStep("need")} className="mt-6 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
+          Voltar para a necessidade principal
         </button>
       </section>
     );
@@ -414,11 +421,13 @@ export default function TarotApp() {
 
     return (
       <section className="mx-auto max-w-5xl rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-slate-950/40 md:p-8">
-        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 3 de 3</p>
+        <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Etapa 5 de 5</p>
         <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="text-3xl font-semibold">Resultado da leitura</h2>
             <p className="mt-2 text-slate-300">Tema: {reading.themeLabel}</p>
+            <p className="mt-1 text-slate-300">Estado: {reading.mood.label}</p>
+            <p className="mt-1 text-slate-300">Busca: {reading.need.label}</p>
             <p className="mt-1 text-slate-300">Tiragem: {reading.spread.label}</p>
             <p className="mt-1 text-sm text-slate-400">{reading.createdAt}</p>
           </div>
@@ -429,24 +438,28 @@ export default function TarotApp() {
 
         {reading.warning && <div className="mt-5 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-amber-100">{reading.warning}</div>}
 
+        <section className="mt-6 rounded-2xl border border-amber-100/20 bg-amber-100/10 p-5">
+          <h3 className="font-semibold text-amber-100">Abertura da leitura</h3>
+          <Paragraphs text={reading.opening} />
+        </section>
+
         <div className="mt-6 grid gap-5">
           {reading.cards.map((card) => <TarotCard key={`${card.name}-${card.position}`} card={card} />)}
         </div>
 
-        <section className="mt-5 rounded-2xl border border-violet-300/20 bg-violet-300/10 p-4">
-          <h3 className="font-semibold">Leitura combinada</h3>
-          <p className="mt-2 leading-relaxed text-slate-300">{reading.synthesis}</p>
+        <section className="mt-5 rounded-2xl border border-violet-300/20 bg-violet-300/10 p-5">
+          <h3 className="font-semibold text-violet-100">Padrão central da leitura</h3>
+          <Paragraphs text={reading.synthesis} />
         </section>
 
-        <section className="mt-5 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-            <h3 className="font-semibold">Conselho final</h3>
-            <p className="mt-2 leading-relaxed text-slate-300">{reading.advice}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-            <h3 className="font-semibold">Pergunta para reflexão</h3>
-            <p className="mt-2 leading-relaxed text-slate-300">{reading.reflection}</p>
-          </div>
+        <section className="mt-5 rounded-2xl border border-white/10 bg-slate-950/70 p-5">
+          <h3 className="font-semibold">Conselho final</h3>
+          <Paragraphs text={reading.advice} />
+        </section>
+
+        <section className="mt-5 rounded-2xl border border-white/10 bg-slate-950/70 p-5">
+          <h3 className="font-semibold">Pergunta para reflexão</h3>
+          <p className="mt-2 leading-relaxed text-slate-300">{reading.reflection}</p>
         </section>
       </section>
     );
@@ -454,6 +467,8 @@ export default function TarotApp() {
 
   function renderCurrentStep() {
     if (step === "theme") return renderThemeSelection();
+    if (step === "mood") return renderMoodSelection();
+    if (step === "need") return renderNeedSelection();
     if (step === "spread") return renderSpreadSelection();
     if (step === "result") return renderResult();
     return renderHome();
